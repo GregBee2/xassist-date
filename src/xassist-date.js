@@ -115,18 +115,33 @@ var _dateDict = {
 	//date functionality
 	//date functionality
 var _getWeekDay= function (/*index,*/type, startindexOfWeek, zeroBased) {
-	var onValidDate=0,index;
-	//console.log(l);
-	if (this.valid) {
-		onValidDate=1;
+	var onDateObj=0,index;
+
+	if (this && this.constructor && this.constructor.name==="DateObj") {
+		onDateObj=1;
 	}
-	index = (onValidDate?this.getDay():arguments[0]||0);
-	type = (arguments[1-onValidDate]||_dateDict.days.defaultKey).toLowerCase();
-	startindexOfWeek = arguments[2-onValidDate]||0;
-	zeroBased = !!(arguments[3-onValidDate]||true);
-	index = Math.abs((index - (zeroBased ? 0 : 1) + startindexOfWeek) % 7);
-	type=!_dateDict.days.hasOwnProperty(type)?_dateDict.days.defaultKey:type;
+	index = (onDateObj?this.getDay():arguments[0]||0);
+	type = (""+arguments[1-onDateObj]||_dateDict.days.defaultKey).toLowerCase();
+	startindexOfWeek = (onDateObj?0:arguments[2]||0);
+	zeroBased = (onDateObj?true:!!(typeof arguments[3]!=="undefined"? arguments[3]:true));
+	
+	index =((index - (zeroBased ? 0 : 1) + startindexOfWeek) % 7);
+	type=(!_dateDict.days.hasOwnProperty(type)?_dateDict.days.defaultKey:type);
+	index=(index<0?7+index:index);
 	return _dateDict.days[type][index];
+};
+var _getMonth=function (/*index,*/type, zeroBased) {
+	var onDateObj=0,index;
+	if (this &&this.constructor &&  this.constructor.name==="DateObj") {
+		onDateObj=1;
+	}
+	index = (onDateObj?this.getMonth():arguments[0]||0);
+	type = (""+arguments[1-onDateObj]||_dateDict.month.defaultKey).toLowerCase();
+	type=(!_dateDict.month.hasOwnProperty(type)?_dateDict.month.defaultKey:type);
+	zeroBased = (onDateObj?true:!!(typeof arguments[2]!=="undefined"? arguments[2]:true));
+	index = ((index - (zeroBased ? 0 : 1)) % 12);
+	index=index<0?12+index:index;
+	return _dateDict.month[type][index];
 };
 var _testDateFormat=function(day,month,year){
 	return day<=_maxNumberofDays(month,year);
@@ -230,31 +245,8 @@ DateObj.prototype.isValid = function () {
 /*if date is not set:4arguments: index of weekday,type,startindexOfWeek and zeroBased
 else index=date.getDay();*/
 /*TODO adapt arguments optional, ...*/
-date.getWeekDay=_getWeekDay.bind({valid:false});
+date.getWeekDay=_getWeekDay.bind(null);
+date.month =_getMonth.bind(null);
 DateObj.prototype.getWeekDay =_getWeekDay
-DateObj.prototype.month = function (type, zeroBased) {
-	var l = arguments.length,
-	index;
-	if (this.valid) {
-		index = this.getMonth();
-		l = l + 1; /*index not set so we shift 1*/
-	} else {
-		index = arguments[0];
-		type = arguments[1];
-		zeroBased = arguments[2];
-	}
-	if (l === 1) {
-		type = _dateDict.month.defaultKey;
-		zeroBased = true;
-	} else if (l === 2) {
-		zeroBased = true;
-	}
-	zeroBased = !!zeroBased;
-	type = type.toLowerCase();
-	index = Math.abs((index - (zeroBased ? 0 : 1)) % 12);
-	if(!_dateDict.month.hasOwnProperty(type)){
-		type = _dateDict.month.defaultKey;
-	}
-	return _dateDict.month[type][index];
-};
+DateObj.prototype.month =_getMonth;
 export default date;

@@ -115,30 +115,60 @@ tape("date().isValid(): returns if the created date is a valid date", function(t
 		"date().isValid() WORKS");
 	test.end();
 });
-tape("date().getWeekday(): test_4", function(test){
-	test.ok(date(2018,2,29).getWeekDay()==="Thursday" && date.getWeekDay(1)==="Monday",
-		"date().getWeekday() WORKS");
+tape("date().getWeekday(): returns the weekday of valid date or undefined", function(test){
+	var a=date(2018,2,29);
+	var b=date("");
+	//getWeekday(type [default:long])
+	test.ok(a.getWeekDay()==="Thursday",
+		"date().getWeekday() returns day of date() when valid");
+	test.ok(typeof b.getWeekDay()==="undefined",
+		"date().getWeekday() returns undefined if date() is invalid");
+	test.ok(a.getWeekDay("Short")==="Thu" && a.getWeekDay("abbreviation")=="T" && a.getWeekDay("LONG")=="Thursday" && a.getWeekDay("UNkncdfj")=="Thursday",
+		"date().getWeekday(type) returns short,abbreviated or long daynames, with default to long");
+	test.ok(a.getWeekDay("long",1)==="Thursday" &&typeof b.getWeekDay("long",1)==="undefined",
+		"date().getWeekday(type,startWeekIndex) startWeekIndex does nothing on valid date, invalid dates return undefined");
+	test.ok(a.getWeekDay("long",1,false)==="Thursday" &&typeof  b.getWeekDay("long",1,false)==="undefined",
+		"date().getWeekday(type,startWeekIndex,zeroBased) zeroBased does nothing on valid date, invalid dates return undefined");
 	test.end();
 });
 tape("date.getWeekday(): gives the weekday based on index", function(test){
 	//getWeekday(index,type [default:long],startIndexofWeek [default:0],zeroBased [default:true])
-	var result=
-	date.getWeekDay()==="Sunday"
-	date.getWeekDay(1,"Short")==="Mon"
-	date.getWeekDay(1,"abbreviation")==="M"
-	date.getWeekDay(1,"long",1)==="Tuesday"
-	date.getWeekDay(1,"long",1,false)==="Monday"
-	
-	
-	
 	test.ok(date.getWeekDay()==="Sunday",
 		"date.getWeekday() returns first day of week");
-	test.ok(date.getWeekDay(1)==="Monday"&&date.getWeekDay(8)==="Monday",
-		"date.getWeekday(index) returns day of week corresponding to index, it even works with indexes>6");
+	test.ok(date.getWeekDay(1)==="Monday"&&date.getWeekDay(8)==="Monday"&&date.getWeekDay(-8)=="Saturday",
+		"date.getWeekday(index) returns day of week corresponding to index, it even works with indexes>6 or negative indices");
+	test.ok(date.getWeekDay(1,"Short")==="Mon" && date.getWeekDay(1,"abbreviation")=="M" && date.getWeekDay(1,"LONG")=="Monday" && date.getWeekDay(1,"UNkncdfj")=="Monday",
+		"date.getWeekday(index,type) returns short,abbreviated or long daynames, with default to long");
+	test.ok(date.getWeekDay(1,"long",1)==="Tuesday" ,
+		"date.getWeekday(index,type,startWeekIndex) startWeekIndex sets first day of week (0=sunday,1=monday,...), defaults to 0");
+	test.ok(date.getWeekDay(1,"long",1,false)==="Monday" && date.getWeekDay(-7,"long",1,false)==="Sunday"&& date.getWeekDay(0,"long",1,false)==="Sunday" && date.getWeekDay(1,"long",1,true)==="Tuesday",
+		"date.getWeekday(index,type,startWeekIndex,zeroBased) zeroBased sets base of index (not of startWeekindex), defaults to true");
 	test.end();
 });
-tape("date().month(): test_5", function(test){
-	test.ok(true,
-		"date().month() WORKS");
+tape("date().month(): returns the month of valid date or undefined", function(test){
+	var a=date(2018,2,29);
+	var b=date("");
+	//month(type [default:long])
+	test.ok(a.month()==="March",
+		"date().month() returns month of date() when valid");
+	test.ok(typeof b.month()==="undefined",
+		"date().month() returns undefined if date() is invalid");
+	test.ok(a.month("Short")==="Mar" && a.month("abbreviation")=="M" && a.month("LONG")=="March" && a.month("UNkncdfj")=="March",
+		"date().month(type) returns short,abbreviated or long monthnames, with default to long");
+	test.ok(a.month("long",false)==="March" &&typeof  b.month("long",false)==="undefined",
+		"date().month(type,zeroBased) zeroBased does nothing on valid date, invalid dates keep returning undefined");
+	test.end();
+});
+tape("date.month(): gives the month based on index", function(test){
+	//getWeekday(index,type [default:long],zeroBased [default:true])
+	test.ok(date.month()==="January",
+		"date.month() returns first month of year");
+	test.ok(date.month(1)==="February"&&date.month(13)==="February" && date.month(-14)=="November",
+		"date.month(index) returns month corresponding to index, it even works with indexes>11 or negative indices");
+	test.ok(date.month(1,"Short")==="Feb" && date.month(1,"abbreviation")=="F" && date.month(1,"LONG")=="February" && date.month(1,"UNkncdfj")=="February",
+		"date.month(index,type) returns short,abbreviated or long monthnames, with default to long");
+	
+	test.ok(date.month(1,"long",false)==="January" && date.month(-13,"long",false)==="November"&& date.month(0,"long",false)==="December" && date.month(1,"long",true)==="February",
+		"date.month(index,type,zeroBased) zeroBased sets base of index, defaults to true");
 	test.end();
 });

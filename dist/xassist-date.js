@@ -2,7 +2,7 @@
 * @preserve
 * https://github.com/GregBee2/xassist-date.git Version 0.0.1.
 *  Copyright 2018 Gregory Beirens.
-*  Created on Wed, 28 Mar 2018 18:10:32 GMT.
+*  Created on Thu, 29 Mar 2018 09:45:17 GMT.
 */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -11,12 +11,18 @@
 }(this, (function (exports) { 'use strict';
 
 var _dateDict = {
-		daysAbbrev : ["S", "M", "T", "W", "T", "F", "S"],
-		daysShort : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-		daysLong : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-		monthAbbrev : ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
-		monthShort : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-		monthLong : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+		days:{
+			defaultKey:"long",
+			"abbreviation" : ["S", "M", "T", "W", "T", "F", "S"],
+			"short":["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+			"long":["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+		},
+		month:{
+			defaultKey:"long",
+			"abbreviation" : ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
+			"short": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+			"long": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+		}
 	},
 	_leapYear=function(year)
 	{
@@ -118,6 +124,20 @@ var _dateDict = {
 	*/
 	//date functionality
 	//date functionality
+var _getWeekDay= function (/*index,*/type, startindexOfWeek, zeroBased) {
+	var onValidDate=0,index;
+	//console.log(l);
+	if (this.valid) {
+		onValidDate=1;
+	}
+	index = (onValidDate?this.getDay():arguments[0]||0);
+	type = (arguments[1-onValidDate]||_dateDict.days.defaultKey).toLowerCase();
+	startindexOfWeek = arguments[2-onValidDate]||0;
+	zeroBased = !!(arguments[3-onValidDate]||true);
+	index = Math.abs((index - (zeroBased ? 0 : 1) + startindexOfWeek) % 7);
+	type=!_dateDict.days.hasOwnProperty(type)?_dateDict.days.defaultKey:type;
+	return _dateDict.days[type][index];
+};
 var _testDateFormat=function(day,month,year){
 	return day<=_maxNumberofDays(month,year);
 };
@@ -185,19 +205,20 @@ date.isValidDateString=function (str) {
 date.stringToDate = function (str,format) {
 		var dateObj=date.isValidDateString(str);
 		if(dateObj){
-			if(dateObj.multipleFormats){
+
 				//rewrite format to index of assigned format
 				if(typeof format!=="string"){
 					format=0;
 					
 				}
-				else{
+				else {
 					format=dateObj.format.indexOf(format.toUpperCase());
 					if(format===-1){
 						return false;
 					}
 				}	
-			}
+
+
 			return date(dateObj.year[format],dateObj.month[format]-1,dateObj.day[format],dateObj.hours,dateObj.minutes,dateObj.seconds,dateObj.milliSeconds);
 		}
 		else{
@@ -219,43 +240,8 @@ DateObj.prototype.isValid = function () {
 /*if date is not set:4arguments: index of weekday,type,startindexOfWeek and zeroBased
 else index=date.getDay();*/
 /*TODO adapt arguments optional, ...*/
-DateObj.prototype.getWeekDay = function (type, startindexOfWeek, zeroBased) {
-	var l = arguments.length,
-	index;
-	//console.log(l);
-	if (this.valid) {
-		//index=this.date.getDay();
-		index = this.getDay();
-		l = l + 1; /*index not set so we shift 1*/
-	} else {
-		index = arguments[0];
-		type = arguments[1];
-		startindexOfWeek = arguments[2];
-		zeroBased = arguments[3];
-	}
-	if (l === 1) {
-		type = "long";
-		startindexOfWeek = 0;
-		zeroBased = true;
-	} else if (l === 2) {
-		startindexOfWeek = 0;
-		zeroBased = true;
-	} else if (l === 3) {
-		zeroBased = true;
-	} else {
-		//error
-	}
-	zeroBased = !!zeroBased;
-	type = type.toLowerCase();
-	index = Math.abs((index - (zeroBased ? 0 : 1) + startindexOfWeek) % 7);
-	if (type === "abbreviation") {
-		return _dateDict.daysAbbrev[index];
-	} else if (type === "short") {
-		return _dateDict.daysShort[index];
-	} else {
-		return _dateDict.daysLong[index];
-	}
-};
+date.getWeekDay=_getWeekDay.bind({valid:false});
+DateObj.prototype.getWeekDay =_getWeekDay;
 DateObj.prototype.month = function (type, zeroBased) {
 	var l = arguments.length,
 	index;
@@ -268,7 +254,7 @@ DateObj.prototype.month = function (type, zeroBased) {
 		zeroBased = arguments[2];
 	}
 	if (l === 1) {
-		type = "long";
+		type = _dateDict.month.defaultKey;
 		zeroBased = true;
 	} else if (l === 2) {
 		zeroBased = true;
@@ -276,13 +262,10 @@ DateObj.prototype.month = function (type, zeroBased) {
 	zeroBased = !!zeroBased;
 	type = type.toLowerCase();
 	index = Math.abs((index - (zeroBased ? 0 : 1)) % 12);
-	if (type === "abbreviation") {
-		return _dateDict.monthAbbrev[index];
-	} else if (type === "short") {
-		return _dateDict.monthShort[index];
-	} else {
-		return _dateDict.monthLong[index];
+	if(!_dateDict.month.hasOwnProperty(type)){
+		type = _dateDict.month.defaultKey;
 	}
+	return _dateDict.month[type][index];
 };
 
 exports.date = date;

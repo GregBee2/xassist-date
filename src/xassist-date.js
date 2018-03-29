@@ -249,5 +249,5 @@ date.getWeekDay=_getWeekDay.bind(null);
 date.month =_getMonth.bind(null);
 DateObj.prototype.getWeekDay =_getWeekDay
 DateObj.prototype.month =_getMonth;
-DateObj.prototype.isLeapYear = _leapYear.bind(this,this.getFullYear());
+DateObj.prototype.isLeapYear =function(){return _leapYear(this.getFullYear());};
 export default date;

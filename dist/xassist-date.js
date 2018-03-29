@@ -1,8 +1,8 @@
 /**
 * @preserve
-* https://github.com/GregBee2/xassist-date.git Version 0.0.3.
+* https://github.com/GregBee2/xassist-date.git Version 0.0.4.
 *  Copyright 2018 Gregory Beirens.
-*  Created on Thu, 29 Mar 2018 11:18:27 GMT.
+*  Created on Thu, 29 Mar 2018 11:19:34 GMT.
 */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -259,7 +259,7 @@ date.getWeekDay=_getWeekDay.bind(null);
 date.month =_getMonth.bind(null);
 DateObj.prototype.getWeekDay =_getWeekDay;
 DateObj.prototype.month =_getMonth;
-DateObj.prototype.isLeapYear = _leapYear.bind(undefined,undefined.getFullYear());
+DateObj.prototype.isLeapYear =function(){return _leapYear(this.getFullYear());};
 
 exports.date = date;
 

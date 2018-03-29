@@ -23,7 +23,7 @@ var options={
 	baseLevel:3,
 	headerTemplates:{
 		moduleName:"xassist-date",
-		moduleUrl:"https://raw.githubusercontent.com/GregBee2/xassist-date/master/dist/xAssist-date.min.js",
+		moduleUrl:"https://raw.githubusercontent.com/GregBee2/xassist-date/master/dist/xassist-date.min.js",
 		libraryName:"@xassist",
 		libraryUrl:"https://github.com/GregBee2/xassist",
 		moduleTest:"date()"

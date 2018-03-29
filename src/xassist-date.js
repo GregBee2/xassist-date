@@ -124,7 +124,7 @@ var _dateDict = {
 var _getWeekDay= function (/*index,*/type, startindexOfWeek, zeroBased) {
 	var onDateObj=0,index;
 
-	if (this && this.constructor && this.constructor.name==="DateObj") {
+	if (this && this.constructor && this.constructor.name==="XaDate") {
 		onDateObj=1;
 	}
 	index = (onDateObj?this.getDay():arguments[0]||0);
@@ -139,7 +139,7 @@ var _getWeekDay= function (/*index,*/type, startindexOfWeek, zeroBased) {
 };
 var _getMonth=function (/*index,*/type, zeroBased) {
 	var onDateObj=0,index;
-	if (this &&this.constructor &&  this.constructor.name==="DateObj") {
+	if (this &&this.constructor &&  this.constructor.name==="XaDate") {
 		onDateObj=1;
 	}
 	index = (onDateObj?this.getMonth():arguments[0]||0);
@@ -155,7 +155,7 @@ var _testDateFormat=function(day,month,year){
 }
 
 var date=function() {
-	return new DateObj([].slice.call(arguments));
+	return new XaDate([].slice.call(arguments));
 	
 };
 
@@ -237,31 +237,30 @@ date.stringToDate = function (str,format) {
 			return false;
 		}
 	};
-function DateObj(inputArray) {
+function XaDate(inputArray) {
 	var x = new(Function.prototype.bind.apply(
 				Date, [Date].concat(inputArray)));
-	Object.setPrototypeOf(x, DateObj.prototype);
-	x.valid = _validDate(x);
+	Object.setPrototypeOf(x, XaDate.prototype);
 	return x;
 }
-//Object.setPrototypeOf(DateObj, DateObj.prototype);
-Object.setPrototypeOf(DateObj.prototype, Date.prototype);
-DateObj.prototype.isValid = function () {
-	return this.valid;
+//Object.setPrototypeOf(XaDate, XaDate.prototype);
+Object.setPrototypeOf(XaDate.prototype, Date.prototype);
+XaDate.prototype.isValid = function () {
+	return  _validDate(this);
 };
 /*if date is not set:4arguments: index of weekday,type,startindexOfWeek and zeroBased
 else index=date.getDay();*/
 /*TODO adapt arguments optional, ...*/
 date.getWeekDay=_getWeekDay.bind(null);
 date.month =_getMonth.bind(null);
-DateObj.prototype.getWeekDay =_getWeekDay
-DateObj.prototype.month =_getMonth;
-DateObj.prototype.isLeapYear =function(){
-	return (this.valid?_leapYear(this.getFullYear()):undefined);
+XaDate.prototype.getWeekDay =_getWeekDay
+XaDate.prototype.month =_getMonth;
+XaDate.prototype.isLeapYear =function(){
+	return (this.isValid()?_leapYear(this.getFullYear()):undefined);
 };
 date.isLeapYear = _leapYear;
-DateObj.prototype.daysInMonth =function(){
-	return  (this.valid?_maxNumberofDays(this.getMonth()+1,this.getFullYear()):undefined);
+XaDate.prototype.daysInMonth =function(){
+	return  (this.isValid()?_maxNumberofDays(this.getMonth()+1,this.getFullYear()):undefined);
 };
 date.daysInMonth = _maxNumberofDays;
 export default date;

@@ -18,6 +18,7 @@ var validDateStrings=[
 	["2017","13","1"], //YDM 13 jan 2017,
 	["31","11","1"], //DMY  31 nov 2001 or YMD 1 nov 2031 only second is valid or YDM 11 jan 2031
 	["29","2","2016"], //DMY 29 feb 2016
+	["29","2","2000"], //DMY 29 feb 2016
 ];
 var expectedResult=[
 	new Date(2017,11,1).valueOf(),
@@ -29,7 +30,8 @@ var expectedResult=[
 	new Date(2003,1,1).valueOf(),
 	new Date(2017,0,13).valueOf(),
 	new Date(2031,10,1).valueOf(),
-	new Date(2016,1,29).valueOf()
+	new Date(2016,1,29).valueOf(),
+	new Date(2000,1,29).valueOf()
 ]
 var simpleDateArray=[2017,13,1]
 var possibleFormats=[
@@ -42,11 +44,13 @@ var possibleFormats=[
 	["YMD","YDM","DMY","MDY"],
 	["YDM"],
 	["YMD","YDM"],
+	["DMY"],
 	["DMY"]
 ]
 var invalidDateStrings=[
 	["31","11","2017"], //DMY 1 dec 2017
 	["29","2","2015"], //DMY 29 feb 2015
+	["29","2","1900"], //DMY 29 feb 1900 no leapyear
 ];
 
 function checkDates(dates,fn,mapFn){

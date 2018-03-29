@@ -1,8 +1,8 @@
 /**
 * @preserve
-* https://github.com/GregBee2/xassist-date.git Version 1.0.2.
+* https://github.com/GregBee2/xassist-date.git Version 1.0.3.
 *  Copyright 2018 Gregory Beirens.
-*  Created on Thu, 29 Mar 2018 13:10:27 GMT.
+*  Created on Thu, 29 Mar 2018 13:45:14 GMT.
 */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :

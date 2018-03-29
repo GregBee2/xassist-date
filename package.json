@@ -1,6 +1,6 @@
 {
   "name": "@xassist/xassist-date",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "helper functions for date manipulation",
   "keywords": [
     "date",

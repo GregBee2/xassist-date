@@ -164,7 +164,6 @@ tape("date().month(): returns the month of valid date or undefined", function(te
 	test.end();
 });
 tape("date.month(): gives the month based on index", function(test){
-	//getWeekday(index,type [default:long],zeroBased [default:true])
 	test.ok(date.month()==="January",
 		"date.month() returns first month of year");
 	test.ok(date.month(1)==="February"&&date.month(13)==="February" && date.month(-14)=="November",
@@ -174,5 +173,56 @@ tape("date.month(): gives the month based on index", function(test){
 	
 	test.ok(date.month(1,"long",false)==="January" && date.month(-13,"long",false)==="November"&& date.month(0,"long",false)==="December" && date.month(1,"long",true)==="February",
 		"date.month(index,type,zeroBased) zeroBased sets base of index, defaults to true");
+	test.end();
+});
+tape("date.isLeapYear(): returns if someyear is a leapyear", function(test){
+	test.ok(date.isLeapYear(2000)&&!date.isLeapYear(1999)&&!date.isLeapYear(1900),
+		"date.isLeapYear(year) returns if year is a leapyear");
+	test.ok(date.isLeapYear()===date.isLeapYear(new Date().getFullYear()),
+		"date.isLeapYear() returns if current year is a leapyear");
+	test.ok(typeof date.isLeapYear("fdgf")==="undefined" && typeof date.isLeapYear(NaN)==="undefined" && typeof date.isLeapYear({})==="undefined" ,
+		"date.isLeapYear(/*not numbers*/) returns undefiend");
+	test.end();
+});
+tape("date().isLeapYear(): returns if year in date is a leapyear", function(test){
+	var a1=!date(2018,2,1).isLeapYear();
+	var a2=date(2000,2,1).isLeapYear();
+	var a3=!date(1900,2,1).isLeapYear();
+	var a4=date(2016,2,1).isLeapYear();
+	var b=date("").isLeapYear();
+	//getWeekday(index,type [default:long],zeroBased [default:true])
+	test.ok(a1&&a2&&a3&&a4,
+		"date().isLeapYear() returns if year of valid date is a leapyear");
+	test.ok(typeof b==="undefined",
+		"date().isLeapYear() returns undefined if not a valid date");
+	test.end();
+});
+tape("date().daysInMonth(): returns number of days in the month of the date", function(test){
+	var a1=(date(2018,1,1).daysInMonth()==28);
+	var a2=(date(2000,1,1).daysInMonth()==29);
+	var a3=(date(1900,1,1).daysInMonth()==28);
+	var a4=(date(2016,1,1).daysInMonth()==29);
+	var b=date("").daysInMonth();
+	test.ok(a1&&a2&&a3&&a4,
+		"date().daysInMonth() returns number of days in the month set for date");
+	test.ok(typeof b==="undefined",
+		"date().daysInMonth() returns undefined if not a valid date");
+	test.end();
+});
+tape("date.daysInMonth(): returns the number of days for given month and year", function(test){
+
+	var a1=(date.daysInMonth(2)==date.daysInMonth(2,new Date().getFullYear()));
+	var a2=(date.daysInMonth()==date.daysInMonth(new Date().getMonth()+1,new Date().getFullYear()));
+	var a3=(date.daysInMonth(1)==31);
+	var a4=(date.daysInMonth(2,1900)==28);
+	var a5=(date.daysInMonth(2,2016)==29);
+	var b1=typeof date.daysInMonth(2,"fdf")=="undefined";
+	var b2=typeof date.daysInMonth("dsf")=="undefined";
+	var b3=typeof date.daysInMonth(NaN)=="undefined";
+	var b4=typeof date.daysInMonth({})=="undefined";
+	test.ok(a1&&a2&&a3&&a4&&a5,
+		"date.daysInMonth(year) returns number of days for month (and optionally the year, defaults to curentyear)");
+	test.ok(b1&&b2&&b3&&b4,
+		"date.daysInMonth(/*not numbers*/) returns undefined");
 	test.end();
 });

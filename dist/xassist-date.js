@@ -2,7 +2,7 @@
 * @preserve
 * https://github.com/GregBee2/xassist-date.git Version 0.0.5.
 *  Copyright 2018 Gregory Beirens.
-*  Created on Thu, 29 Mar 2018 11:20:24 GMT.
+*  Created on Thu, 29 Mar 2018 12:10:48 GMT.
 */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -29,11 +29,18 @@ var _dateDict = {
 		//year not divisible by 4 => no leapyear (year % 4 == year & 3 (bitwise AND x%2^n===x&2^(n-1) bit wise and)
 		//else: year not divisible by 100 => leapyear (year % 4 => check year%25
 		//else year divisble by 400 => leapyear ( (year %400) knwoing that year%25==0=>year%16 or year & 15)
-		return (typeof year==="number"?((year & 3) == 0 && ((year % 25) != 0 || (year & 15) == 0)):undefined);
+		year=((typeof year==="undefined")?new Date().getFullYear():year);
+		if(year>0||year<0){
+			return ((year & 3) == 0 && ((year % 25) != 0 || (year & 15) == 0));
+		}
+		return undefined;
 	},
 	_maxNumberofDays=function(month,year){
+		var leap;
+		month=((typeof month==="undefined")?new Date().getMonth()+1:month);
 		if(month===2){
-			return (_leapYear(year)?29:28)
+			leap=_leapYear(year);
+			return (typeof leap==="undefined"?leap:(leap?29:28))
 		}
 		else {
 			return [31,28,31,30,31,30,31,31,30,31,30,31][month-1]
@@ -259,7 +266,14 @@ date.getWeekDay=_getWeekDay.bind(null);
 date.month =_getMonth.bind(null);
 DateObj.prototype.getWeekDay =_getWeekDay;
 DateObj.prototype.month =_getMonth;
-DateObj.prototype.isLeapYear =function(){return _leapYear(this.getFullYear());};
+DateObj.prototype.isLeapYear =function(){
+	return (this.valid?_leapYear(this.getFullYear()):undefined);
+};
+date.isLeapYear = _leapYear;
+DateObj.prototype.daysInMonth =function(){
+	return  (this.valid?_maxNumberofDays(this.getMonth()+1,this.getFullYear()):undefined);
+};
+date.daysInMonth = _maxNumberofDays;
 
 exports.date = date;
 

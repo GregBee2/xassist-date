@@ -106,17 +106,19 @@ tape("date.isValidDateString(): checks if a datestring is valid and returns the 
 		"date.isValidDateString() handles invalid delimiters between dates ok");
 	test.end();
 });
-tape("date(): date creates new class instance of DateObj", function(test){
+tape("date(): date creates new class instance of XaDate", function(test){
 	//constrcutor is DateObj
-	test.ok(date(2017,10,31).constructor.name==="DateObj" && date(2017,10,31) instanceof Date,
-		"date() sets constructor to DateObj, but remains instanceof Date");
+	test.ok(date(2017,10,31).constructor.name==="XaDate" && date(2017,10,31) instanceof Date,
+		"date() sets constructor to XaDate, but remains instanceof Date");
 	test.end();
 });
 
 
 tape("date().isValid(): returns if the created date is a valid date", function(test){
-	test.ok(date("foo").isValid()===false && date().isValid(),
-		"date().isValid() WORKS");
+	var a=date();
+	
+	test.ok(date("foo").isValid()===false && a.isValid() && (a.setYear('fdkjf'),!a.isValid()),
+		"date().isValid() works as expected, even when chaging from a valid to an invalid date");
 	test.end();
 });
 tape("date().getWeekday(): returns the weekday of valid date or undefined", function(test){

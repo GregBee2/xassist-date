@@ -502,3 +502,50 @@ tape("date().addMilliseconds(): adds number of milliseconds to a certain date", 
 	);
 	test.end();
 });
+tape("date().add(): adds duration to date", function(test){
+	var a=date.stringToDate('2016-2-29 00:00:00',"YMD");
+	var b=date.stringToDate('2016-2-29 00:00:00',"YMD");
+
+	
+	a.add("1.5y 3.10M 5d 47h 61.20m 13.157s 1243ms")
+	b.add("1.5y 3.10M 5d 47h 61.20m 13.157s 1243ms",false)
+	test.ok(a.toLocaleString()=="2017-12-9 00:01:26" && a.getMilliseconds()===399,
+		"date().add() adds correct duration to date "
+	);
+	test.ok(b.toLocaleString()=="2017-12-10 02:25:26" && b.getMilliseconds()===399,
+		"date().add(duration,false) adds correct duration with first calculating the small units"
+	);
+	//false adds extra day because first adding year to 29 feb gives us 28feb if we add 1 month and then 1 day we get 30 march (true)
+	//	if we first add days we get eg 1 march adding 1year and 1 month gives us 01 april!
+	//false changes the rounding of the month => 0.1*31=>3.1 days instead of 3 days so extra 2hr 24min
+	a=date.stringToDate('2017-12-9 00:01:26.399',"YMD");
+	b=date.stringToDate('2017-12-9 00:01:26.399',"YMD");
+
+	b.add("-1.5y -3.10M -5d -47h -61.20m -13.157s -1243ms",false)
+	a.add("-1.5y -3.10M -5d -47h -61.20m -13.157s -1243ms")
+	test.ok(a.toLocaleString()=="2016-2-27 21:36:00" && a.getMilliseconds()===0,
+		"date().add() adds correct duration to date even with negative figures"
+	);
+	test.ok(b.toLocaleString()=="2016-2-28 21:36:00" && b.getMilliseconds()===0,
+		"date().add(duration,false) adds correct duration with first calculating the small units even with negative figures"
+	);
+	/*
+	2017	-1y								2016
+	12		-9.1m							3=>march has 31 days=>3.1d=>
+	9			-5d								-5-3=>1march-2d=28
+	0			-47h								47+2.4hr(months)=>49=>2d=>-2hr from 60m =>22=>21 because we overflow the minutes
+	1			-61m							60-0.4*60=36
+	26		-25s								0
+	399		-1399.9999ms				0
+	
+	2016	+1y								2017
+	02		+9.1m							11 => nov has 30days=>3d=>+add month from days=>12
+	29		+5d								07 +24hr=>08 +24hr=>09
+	0			+47h							23hr +60m =>24hr =>0
+	0			+61m							1
+	0			+25s							25+1s=>26
+	0			+1399.9999ms			399
+	*/
+	test.end();
+})
+

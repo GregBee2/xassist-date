@@ -1,5 +1,5 @@
 "use strict"
-
+import { default as duration } from "./xassist-duration.js"
 var _dateDict = {
 		days:{
 			defaultKey:"long",
@@ -263,12 +263,69 @@ XaDate.prototype.daysInMonth =function(){
 	return  (this.isValid()?_maxNumberofDays(this.getMonth()+1,this.getFullYear()):undefined);
 };
 date.daysInMonth = _maxNumberofDays;
-/*XaDate.prototype.add=function(duration){
+XaDate.prototype._addSmall=function(dur){
+	this.addDays(dur.removeIntervalOfType("day"));
+	this.addHours(dur.removeIntervalOfType("hour"));
+	this.addMinutes(dur.removeIntervalOfType("minute"));
+	this.addSeconds(dur.removeIntervalOfType("second"));
+	this.addMilliseconds(dur.removeIntervalOfType("millisecond"));
 	return this;
 }
-XaDate.prototype.subtract=function(duration){
+XaDate.prototype.add=function(dur/*,firstBig*/){
+	var decMonth,groundMonth,currentDay,currentMonth,args=[].slice.call(arguments);
+	var firstBig=args.pop();
+	if(typeof firstBig!=="boolean"){
+		args.push(firstBig)
+		firstBig=true; //this makes a difference in subtracting durations
+	}
+	if(dur.constructor.name!=="XaDuration"){
+		dur=duration.apply(null,args)
+	}
+	dur.normalize();
+	if (firstBig){
+		currentDay=this.getDate();
+		this.addYears(dur.removeIntervalOfType("year"));
+		decMonth=dur.month*10%10/10;
+		groundMonth=dur.month-decMonth;
+		//console.log(dur)
+		this.addMonths(dur.removeIntervalOfType("month",groundMonth));
+		//remove rounding errors
+		dur.month=decMonth
+		console.log(dur.month)
+		//we get month and set date date
+		currentMonth=this.getMonth();
+		this.setDate(currentDay);
+		 if (this.getMonth() !== currentMonth){
+			this.setDate(0) //go back to last day of previous month;
+		}
+		//console.log(dur)
+		
+		dur.normalizeMonth(this.daysInMonth());
+	}
+	//console.log(dur)
+	this._addSmall(dur);
+	if(!firstBig){
+		console.log(dur)
+		console.log(this.daysInMonth())
+		dur.normalizeMonth(this.daysInMonth());
+		console.log(dur)
+		//console.log(dur)
+		//decMonth=dur.month*10%10/10;
+		//groundMonth=dur.month-decMonth;
+		this._addSmall(dur); //what if this is not an integer? we should normalise further
+		currentDay=this.getDate();
+		this.addYears(dur.removeIntervalOfType("year"));
+		this.addMonths(dur.removeIntervalOfType("month"));
+		//we get month and set date date
+		currentMonth=this.getMonth();
+		this.setDate(currentDay);
+		 if (this.getMonth() !== currentMonth){
+			this.setDate(0) //go back to last day of previous month;
+		}
+		//console.log(dur)
+	}
 	return this;
-}*/
+}
 XaDate.prototype.addMonths=function(m){
 	//faster implementation than datejs
 	var day,month;

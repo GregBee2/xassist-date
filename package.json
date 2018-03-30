@@ -28,12 +28,14 @@
     "uglify": "uglifyjs  --comments /^@preserve/ dist/xassist-date.js -c -m -o dist/xassist-date.min.js"
   },
   "devDependencies": {
-    "csv2readme": "^1.0.1",
+    "csv2readme": "^1.1.1",
     "rimraf": "^2.6.2",
-    "rollup": "^0.56.3",
+    "rollup": "^0.57.1",
     "tape": "^4.9.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@xassist/xassist-object": "^1.0.4"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/GregBee2/xassist-date.git"

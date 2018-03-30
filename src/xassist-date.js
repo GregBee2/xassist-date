@@ -271,8 +271,24 @@ XaDate.prototype._addSmall=function(dur){
 	this.addMilliseconds(dur.removeIntervalOfType("millisecond"));
 	return this;
 }
+XaDate.prototype._addBig=function(dur){
+	var currentDay=this.getDate(),currentMonth;
+	var decMonth=dur.month*10%10/10;
+	var groundMonth=dur.month-decMonth;
+	this.addYears(dur.removeIntervalOfType("year"));
+	this.addMonths(dur.removeIntervalOfType("month",groundMonth));
+	//remove rounding errors
+	dur.month=decMonth
+	//we get month and set date date
+	currentMonth=this.getMonth();
+	this.setDate(currentDay);
+	 if (this.getMonth() !== currentMonth){
+		this.setDate(0) //go back to last day of previous month;
+	}
+	
+}
 XaDate.prototype.add=function(dur/*,firstBig*/){
-	var decMonth,groundMonth,currentDay,currentMonth,args=[].slice.call(arguments);
+	var args=[].slice.call(arguments);
 	var firstBig=args.pop();
 	if(typeof firstBig!=="boolean"){
 		args.push(firstBig)
@@ -283,46 +299,16 @@ XaDate.prototype.add=function(dur/*,firstBig*/){
 	}
 	dur.normalize();
 	if (firstBig){
-		currentDay=this.getDate();
-		this.addYears(dur.removeIntervalOfType("year"));
-		decMonth=dur.month*10%10/10;
-		groundMonth=dur.month-decMonth;
-		//console.log(dur)
-		this.addMonths(dur.removeIntervalOfType("month",groundMonth));
-		//remove rounding errors
-		dur.month=decMonth
-		console.log(dur.month)
-		//we get month and set date date
-		currentMonth=this.getMonth();
-		this.setDate(currentDay);
-		 if (this.getMonth() !== currentMonth){
-			this.setDate(0) //go back to last day of previous month;
-		}
-		//console.log(dur)
-		
+		this._addBig(dur)
 		dur.normalizeMonth(this.daysInMonth());
 	}
 	//console.log(dur)
 	this._addSmall(dur);
 	if(!firstBig){
-		console.log(dur)
-		console.log(this.daysInMonth())
 		dur.normalizeMonth(this.daysInMonth());
-		console.log(dur)
-		//console.log(dur)
-		//decMonth=dur.month*10%10/10;
-		//groundMonth=dur.month-decMonth;
-		this._addSmall(dur); //what if this is not an integer? we should normalise further
-		currentDay=this.getDate();
-		this.addYears(dur.removeIntervalOfType("year"));
-		this.addMonths(dur.removeIntervalOfType("month"));
-		//we get month and set date date
-		currentMonth=this.getMonth();
-		this.setDate(currentDay);
-		 if (this.getMonth() !== currentMonth){
-			this.setDate(0) //go back to last day of previous month;
-		}
-		//console.log(dur)
+		this._addSmall(dur); 
+		this._addBig(dur)
+		
 	}
 	return this;
 }

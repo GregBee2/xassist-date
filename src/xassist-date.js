@@ -283,7 +283,7 @@ XaDate.prototype._addBig=function(dur){
 	//we get month and set date date
 	currentMonth=this.getMonth();
 	this.setDate(currentDay);
-	 if (this.getMonth() !== currentMonth){
+	if (this.getMonth() !== currentMonth){
 		this.setDate(0) //go back to last day of previous month;
 	}
 	//console.log("after: "+this.toLocaleString()+")
@@ -324,14 +324,14 @@ XaDate.prototype.addMonths=function(m){
 	this.setMonth(this.getMonth() + m, 1);
 	month=this.getMonth();
 	this.setDate(day);
-	 if (this.getMonth() !== month){
+	if (this.getMonth() !== month){
 		this.setDate(0) //go back to last day of previous month;
 	}
     return this;
 }
 XaDate.prototype.addYears=function(y){
 	//faster implementation than datejs
-	var day,month;
+	var month;
 	if(typeof y!=="number"){
 		return this;
 	}
@@ -339,7 +339,7 @@ XaDate.prototype.addYears=function(y){
 	//day=this.getDate()
 	this.setFullYear(this.getFullYear() + y,month);
 
-	 if (this.getMonth() !== month){
+	if (this.getMonth() !== month){
 		this.setDate(0) //go back to last day of previous month;
 	}
     return this;

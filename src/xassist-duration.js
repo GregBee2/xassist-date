@@ -1,5 +1,5 @@
-//import { object } from "@xassist/xassist-object";
-var { object } =require("@xassist/xassist-object");
+import { object } from "@xassist/xassist-object";
+//var { object } =require("@xassist/xassist-object");
 
 var _durationRegexp=[
 		{key:"year",re:			/(-?\d*(?:[.,]\d*)?)(?:[ ]?y|Y|years?|Years?)(?![a-zA-z])/g}, //years component
@@ -86,9 +86,9 @@ XaDuration.prototype.init=function(a){
 	if(a.length>1){
 		a.forEach(function(val,i){
 			//console.log(val,i,wantedKeys[i],this[wantedKeys[i]])
-			 if(i<this._keyOrder.length&&typeof val==="number"){
-				 this[this._keyOrder[i]]+=val;
-			 }
+			if(i<this._keyOrder.length&&typeof val==="number"){ 
+				this[this._keyOrder[i]]+=val;
+			}
 		},this)
 	}
 	
@@ -175,7 +175,7 @@ XaDuration.prototype.removeIntervalOfType=function(type,value){
 }
 XaDuration.prototype.normalizeMonth=function(numberOfDays){
 	var dec=this.month*10%10/10;
-	console.log(this.month+"-"+dec)	
+//console.log(this.month+"-"+dec)	
 	this.month=this.month-dec;
 	this.day+=numberOfDays*dec;
 	return this.normalize();

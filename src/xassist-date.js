@@ -272,7 +272,7 @@ XaDate.prototype._addSmall=function(dur){
 	return this;
 }
 XaDate.prototype._addBig=function(dur){
-	console.log("before: "+this.toLocaleString())
+	//console.log("before: "+this.toLocaleString())
 	var currentDay=this.getDate(),currentMonth;
 	var decMonth=dur.month*10%10/10;
 	var groundMonth=dur.month-decMonth;
@@ -286,7 +286,7 @@ XaDate.prototype._addBig=function(dur){
 	 if (this.getMonth() !== currentMonth){
 		this.setDate(0) //go back to last day of previous month;
 	}
-	console.log("after: "+this.toLocaleString()+")
+	//console.log("after: "+this.toLocaleString()+")
 	
 }
 XaDate.prototype.add=function(dur/*,firstBig*/){

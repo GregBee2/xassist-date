@@ -263,4 +263,48 @@ XaDate.prototype.daysInMonth =function(){
 	return  (this.isValid()?_maxNumberofDays(this.getMonth()+1,this.getFullYear()):undefined);
 };
 date.daysInMonth = _maxNumberofDays;
+/*XaDate.prototype.add=function(duration){
+	return this;
+}
+XaDate.prototype.subtract=function(duration){
+	return this;
+}*/
+XaDate.prototype.addMonths=function(m){
+	//faster implementation than datejs
+	var day,month;
+	if(typeof m!=="number"){
+		return this;
+	}
+	day=this.getDate()
+	this.setMonth(this.getMonth() + m, 1);
+	month=this.getMonth();
+	this.setDate(day);
+	 if (this.getMonth() !== month){
+		this.setDate(0) //go back to last day of previous month;
+	}
+    return this;
+}
+XaDate.prototype.addYears=function(y){
+	//faster implementation than datejs
+	var day,month;
+	if(typeof y!=="number"){
+		return this;
+	}
+	month=this.getMonth();
+	//day=this.getDate()
+	this.setFullYear(this.getFullYear() + y,month);
+
+	 if (this.getMonth() !== month){
+		this.setDate(0) //go back to last day of previous month;
+	}
+    return this;
+}
+XaDate.prototype.addDays=function(d){
+
+	if(typeof d!=="number"){
+		return this;
+	}
+	this.setDate(this.getDate()+d) 
+    return this;
+}
 export default date;

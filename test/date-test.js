@@ -228,3 +228,277 @@ tape("date.daysInMonth(): returns the number of days for given month and year", 
 		"date.daysInMonth(/*not numbers*/) returns undefined");
 	test.end();
 });
+tape("date().addMonths(): adds number of months to a certain date", function(test){
+
+	var d=[
+		[date(2015,0,1),1  ,'2015-2-1 00:00:00'],
+		[date(2015,0,1),2  ,'2015-3-1 00:00:00'],
+		[date(2015,0,1),3  ,'2015-4-1 00:00:00'],//daylight saving
+		[date(2015,0,1),4  ,'2015-5-1 00:00:00'],
+		[date(2015,0,15),1,'2015-2-15 00:00:00'],
+		[date(2015,0,31), 1, '2015-2-28 00:00:00'],
+		[date(2016,0,31),1, '2016-2-29 00:00:00'],
+		[date(2015,0,01),11,'2015-12-1 00:00:00'],
+		[date(2015,0,01),12,'2016-1-1 00:00:00'],
+		[date(2015,0,01),24,'2017-1-1 00:00:00'],
+		[date(2015,1,28),12,'2016-2-28 00:00:00'],
+		[date(2015,2,01),12,'2016-3-1 00:00:00'],
+		[date(2016,1,29),12,'2017-2-28 00:00:00'],
+		[date.stringToDate('2015-1-1',"YMD"),1  ,'2015-2-1 00:00:00'],
+		[date.stringToDate('2015-1-1',"YMD"),2  ,'2015-3-1 00:00:00'],
+		[date.stringToDate('2015-1-1',"YMD"),3  ,'2015-4-1 00:00:00'],//daylight saving
+		[date.stringToDate('2015-1-1',"YMD"),4  ,'2015-5-1 00:00:00'],
+		[date.stringToDate('2015-1-15',"YMD"),1,'2015-2-15 00:00:00'],
+		[date.stringToDate('2015-1-31',"YMD"), 1, '2015-2-28 00:00:00'],
+		[date.stringToDate('2016-1-31',"YMD"),1, '2016-2-29 00:00:00'],
+		[date.stringToDate('2015-1-01',"YMD"),11,'2015-12-1 00:00:00'],
+		[date.stringToDate('2015-1-01',"YMD"),12,'2016-1-1 00:00:00'],
+		[date.stringToDate('2015-1-01',"YMD"),24,'2017-1-1 00:00:00'],
+		[date.stringToDate('2015-2-28',"YMD"),12,'2016-2-28 00:00:00'],
+		[date.stringToDate('2015-3-01',"YMD"),12,'2016-3-1 00:00:00'],
+		[date.stringToDate('2016-2-29',"YMD"),12,'2017-2-28 00:00:00']
+	]
+	var result =d.map(x=>({
+		orig:x[0].toLocaleString(),
+		expected:x[2],
+		value:x[1],
+		comp:x[0].addMonths(x[1]).toLocaleString()==x[2]
+	}));
+	result.forEach(function(x){
+		if(x.expected=='2017-2-28 00:00:00'){
+			x.orig='2016-2-28 00:00:00'
+		}
+		else if(x.expected=='2016-2-29 00:00:00'){
+			x.orig='2016-1-29 00:00:00'
+		}
+		else if(x.expected=='2015-2-28 00:00:00'){
+			x.orig='2015-1-28 00:00:00'
+		}
+		x.compInv=(date.stringToDate(x.expected,"YMD").addMonths(-x.value).toLocaleString()==x.orig)
+	})
+
+	test.ok(result.every(x=>x.comp===true),
+		"date().addMonths(month) adds correct number of months and takes care of edge case (leap years, daylight savings,...)"
+	);
+	test.ok(result.every(x=>x.compInv===true),
+		"date().addMonths(-month) works with negative numbers"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addMonths({}).toLocaleString().split(' ')[0]==="2016-2-29",
+		"date().addMonths(/*typeof !==number*/) does not add anything"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addMonths(NaN).isValid()===false,
+		"date().addMonths(NaN) returns invalid date"
+	);
+	test.end();
+});
+tape("date().addYears(): adds number of years to a certain date", function(test){
+
+	var d=[
+		[date.stringToDate('2015-1-1',"YMD"),1  ,'2016-1-1 00:00:00'],
+		[date.stringToDate('2015-1-1',"YMD"),2  ,'2017-1-1 00:00:00'],
+		[date.stringToDate('2015-1-1',"YMD"),3  ,'2018-1-1 00:00:00'],
+		[date.stringToDate('2015-1-1',"YMD"),4  ,'2019-1-1 00:00:00'],
+		[date.stringToDate('2015-1-15',"YMD"),1,'2016-1-15 00:00:00'],
+		[date.stringToDate('2015-1-31',"YMD"), 1, '2016-1-31 00:00:00'],
+		[date.stringToDate('2016-1-31',"YMD"),1, '2017-1-31 00:00:00'],
+		[date.stringToDate('2015-1-01',"YMD"),11,'2026-1-1 00:00:00'],
+		[date.stringToDate('2015-1-01',"YMD"),12,'2027-1-1 00:00:00'],
+		[date.stringToDate('2015-1-01',"YMD"),24,'2039-1-1 00:00:00'],
+		[date.stringToDate('2015-2-28',"YMD"),85,'2100-2-28 00:00:00'],
+		[date.stringToDate('2015-3-01',"YMD"),1,'2016-3-1 00:00:00'],
+		[date.stringToDate('2016-2-29',"YMD"),1,'2017-2-28 00:00:00']
+	]
+	var result =d.map(x=>({
+		orig:x[0].toLocaleString(),
+		expected:x[2],
+		value:x[1],
+		comp:x[0].addYears(x[1]).toLocaleString()==x[2]
+	}));
+	result.forEach(function(x){
+		if(x.expected=='2017-2-28 00:00:00'){
+			x.orig='2016-2-28 00:00:00'
+		}
+		x.compInv=(date.stringToDate(x.expected,"YMD").addYears(-x.value).toLocaleString()==x.orig)
+	})
+
+	test.ok(result.every(x=>x.comp===true),
+		"date().addYears(year) adds correct number of years and takes care of edge case (leap years, daylight savings,...)"
+	);
+	test.ok(result.every(x=>x.compInv===true),
+		"date().addYears(-year) works with negative numbers"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addYears({}).toLocaleString().split(' ')[0]==="2016-2-29",
+		"date().addYears(/*typeof !==number*/) does not add anything"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addYears(NaN).isValid()===false,
+		"date().addYears(NaN) returns invalid date"
+	);
+	test.end();
+});
+tape("date().addDays(): adds number of days to a certain date", function(test){
+
+	var d=[
+		[date.stringToDate('2015-1-1',"YMD"),1  ,'2015-1-2 00:00:00'],
+		[date.stringToDate('2018-3-25',"YMD"),1  ,'2018-3-26 00:00:00'], //daylightSaving
+		[date.stringToDate('2016-2-29',"YMD"),1,'2016-3-1 00:00:00'],
+		[date.stringToDate('2016-2-29',"YMD"),15,'2016-3-15 00:00:00'],
+		[date.stringToDate('2015-2-28',"YMD"),366,'2016-2-29 00:00:00'],
+		[date.stringToDate('2016-2-29',"YMD"),366,'2017-3-1 00:00:00']
+	]
+	var result =d.map(x=>({
+		orig:x[0].toLocaleString(),
+		expected:x[2],
+		value:x[1],
+		comp:x[0].addDays(x[1]).toLocaleString()==x[2]
+	}));
+	result.forEach(function(x){
+		x.compInv=(date.stringToDate(x.expected,"YMD").addDays(-x.value).toLocaleString()==x.orig)
+	})
+	test.ok(result.every(x=>x.comp===true),
+		"date().addDays(day) adds correct number of days and takes care of edge case (leap years, daylight savings,...)"
+	);
+	test.ok(result.every(x=>x.compInv===true),
+		"date().addDays(-day) works with negative numbers"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addDays({}).toLocaleString().split(' ')[0]==="2016-2-29",
+		"date().addDays(/*typeof !==number*/) does not add anything"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addDays(NaN).isValid()===false,
+		"date().addDays(NaN) returns invalid date"
+	);
+	test.end();
+});
+
+tape("date().addHours(): adds number of hours to a certain date", function(test){
+
+	var d=[
+		[date.stringToDate('2015-1-1 00:00:00',"YMD"),1  ,'2015-1-1 01:00:00'],
+		[date.stringToDate('2018-3-25 00:00:00',"YMD"),3  ,'2018-3-25 03:00:00'], //daylightSaving
+		[date.stringToDate('2016-2-29 23:00:00',"YMD"),1,'2016-3-1 00:00:00'],
+		[date.stringToDate('2016-2-29 00:00:00',"YMD"),47,'2016-3-1 23:00:00'],
+		[date.stringToDate('2015-2-28 00:00:00',"YMD"),(366*24),'2016-2-29 00:00:00'],
+		[date.stringToDate('2016-2-29 00:00:00',"YMD"),((366*24)+1),'2017-3-1 01:00:00']
+	]
+	var result =d.map(x=>({
+		orig:x[0].toLocaleString(),
+		expected:x[2],
+		value:x[1],
+		comp:x[0].addHours(x[1]).toLocaleString()==x[2]
+	}));
+	result.forEach(function(x){
+		x.compInv=(date.stringToDate(x.expected,"YMD").addHours(-x.value).toLocaleString()==x.orig)
+	})
+	test.ok(result.every(x=>x.comp===true),
+		"date().addHours(hours) adds correct number of hours and takes care of edge case (leap years, daylight savings,...)"
+	);
+	test.ok(result.every(x=>x.compInv===true),
+		"date().addHours(-hours) works with negative numbers"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addHours({}).toLocaleString()==="2016-2-29 00:00:00",
+		"date().addHours(/*typeof !==number*/) does not add anything"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addHours(NaN).isValid()===false,
+		"date().addHours(NaN) returns invalid date"
+	);
+	test.end();
+});
+tape("date().addMinutes(): adds number of minutes to a certain date", function(test){
+
+	var d=[
+		[date.stringToDate('2015-1-1 00:00:00',"YMD"),121  ,'2015-1-1 02:01:00'],
+		[date.stringToDate('2018-3-25 00:00:00',"YMD"),184  ,'2018-3-25 03:04:00'], //daylightSaving
+		[date.stringToDate('2016-2-29 23:59:00',"YMD"),1,'2016-3-1 00:00:00'],
+		[date.stringToDate('2016-2-29 00:00:00',"YMD"),47*60+1,'2016-3-1 23:01:00'],
+		[date.stringToDate('2015-2-28 00:00:00',"YMD"),(366*24*60),'2016-2-29 00:00:00'],
+		[date.stringToDate('2016-2-29 00:00:00',"YMD"),((366*24)+1)*60+1,'2017-3-1 01:01:00']
+	]
+	var result =d.map(x=>({
+		orig:x[0].toLocaleString(),
+		expected:x[2],
+		value:x[1],
+		comp:x[0].addMinutes(x[1]).toLocaleString()==x[2]
+	}));
+	result.forEach(function(x){
+		x.compInv=(date.stringToDate(x.expected,"YMD").addMinutes(-x.value).toLocaleString()==x.orig)
+	})
+	test.ok(result.every(x=>x.comp===true),
+		"date().addMinutes(minutes) adds correct number of minutes and takes care of edge case (leap years, daylight savings,...)"
+	);
+	test.ok(result.every(x=>x.compInv===true),
+		"date().addMinutes(-minutes) works with negative numbers"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addMinutes({}).toLocaleString()==="2016-2-29 00:00:00",
+		"date().addMinutes(/*typeof !==number*/) does not add anything"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addMinutes(NaN).isValid()===false,
+		"date().addMinutes(NaN) returns invalid date"
+	);
+	test.end();
+});
+tape("date().addSeconds(): adds number of seconds to a certain date", function(test){
+
+	var d=[
+		[date.stringToDate('2015-1-1 00:00:00',"YMD"),121*60+11  ,'2015-1-1 02:01:11'],
+		[date.stringToDate('2018-3-25 00:00:00',"YMD"),184*60+13  ,'2018-3-25 03:04:13'], //daylightSaving
+		[date.stringToDate('2016-2-29 23:59:59',"YMD"),1,'2016-3-1 00:00:00'],
+		[date.stringToDate('2016-2-29 00:00:00',"YMD"),(47*60+1)*60+1,'2016-3-1 23:01:01'],
+		[date.stringToDate('2015-2-28 00:00:00',"YMD"),(366*24*60*60),'2016-2-29 00:00:00'],
+		[date.stringToDate('2016-2-29 00:00:00',"YMD"),(((366*24)+1)*60+1)*60+1,'2017-3-1 01:01:01']
+	]
+	var result =d.map(x=>({
+		orig:x[0].toLocaleString(),
+		expected:x[2],
+		value:x[1],
+		comp:x[0].addSeconds(x[1]).toLocaleString()==x[2]
+	}));
+	result.forEach(function(x){
+		x.compInv=(date.stringToDate(x.expected,"YMD").addSeconds(-x.value).toLocaleString()==x.orig)
+	})
+	test.ok(result.every(x=>x.comp===true),
+		"date().addSeconds(seconds) adds correct number of seconds and takes care of edge case (leap years, daylight savings,...)"
+	);
+	test.ok(result.every(x=>x.compInv===true),
+		"date().addSeconds(-seconds) works with negative numbers"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addSeconds({}).toLocaleString()==="2016-2-29 00:00:00",
+		"date().addSeconds(/*typeof !==number*/) does not add anything"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addSeconds(NaN).isValid()===false,
+		"date().addSeconds(NaN) returns invalid date"
+	);
+	test.end();
+});
+tape("date().addMilliseconds(): adds number of milliseconds to a certain date", function(test){
+
+	var d=[
+		[date.stringToDate('2015-1-1 00:00:00',"YMD"),(121*60+11)*1000 ,'2015-1-1 02:01:11'],
+		[date.stringToDate('2018-3-25 00:00:00',"YMD"),(184*60+13)*1000  ,'2018-3-25 03:04:13'], //daylightSaving
+		[date.stringToDate('2016-2-29 23:59:59',"YMD"),1000,'2016-3-1 00:00:00'],
+		[date.stringToDate('2016-2-29 00:00:00',"YMD"),((47*60+1)*60+1)*1000,'2016-3-1 23:01:01'],
+		[date.stringToDate('2015-2-28 00:00:00',"YMD"),(366*24*60*60*1000),'2016-2-29 00:00:00'],
+		[date.stringToDate('2016-2-29 00:00:00',"YMD"),((((366*24)+1)*60+1)*60+1)*1000,'2017-3-1 01:01:01']
+	]
+	var result =d.map(x=>({
+		orig:x[0].toLocaleString(),
+		expected:x[2],
+		value:x[1],
+		comp:x[0].addMilliseconds(x[1]).toLocaleString()==x[2],
+		
+	}));
+	result.forEach(function(x){
+		x.compInv=(date.stringToDate(x.expected,"YMD").addMilliseconds(-x.value).toLocaleString()==x.orig)
+	})
+	test.ok(result.every(x=>x.comp===true),
+		"date().addMilliseconds(milliSeconds) adds correct number of milliseconds and takes care of edge case (leap years, daylight savings,...)"
+	);
+	test.ok(result.every(x=>x.compInv===true),
+		"date().addMilliseconds(-milliSeconds) works with negative numbers"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addMilliseconds({}).toLocaleString()==="2016-2-29 00:00:00",
+		"date().addMilliseconds(/*typeof !==number*/) does not add anything"
+	);
+	test.ok(date.stringToDate('2016-2-29',"YMD").addMilliseconds(NaN).isValid()===false,
+		"date().addMilliseconds(NaN) returns invalid date"
+	);
+	test.end();
+});

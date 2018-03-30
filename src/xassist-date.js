@@ -307,4 +307,36 @@ XaDate.prototype.addDays=function(d){
 	this.setDate(this.getDate()+d) 
     return this;
 }
+XaDate.prototype.addHours=function(h){
+
+	if(typeof h!=="number"){
+		return this;
+	}
+	this.setHours(this.getHours()+h) 
+    return this;
+}
+XaDate.prototype.addMinutes=function(m){
+
+	if(typeof m!=="number"){
+		return this;
+	}
+	this.setMinutes(this.getMinutes()+m) 
+    return this;
+}
+XaDate.prototype.addSeconds=function(s){
+
+	if(typeof s!=="number"){
+		return this;
+	}
+	this.setSeconds(this.getSeconds()+s) 
+    return this;
+}
+XaDate.prototype.addMilliseconds=function(m){
+
+	if(typeof m!=="number"){
+		return this;
+	}
+	this.setMilliseconds(this.getMilliseconds()+m) 
+    return this;
+}
 export default date;

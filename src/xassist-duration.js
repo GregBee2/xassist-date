@@ -2,17 +2,18 @@
 var { object } =require("@xassist/xassist-object");
 
 var _durationRegexp=[
-		{key:"year",re:	/(\d*(?:[.,]\d*)?)(?:[ ]?y|Y|years?|Years?)(?![a-zA-z])/g}, //years component
-		{key:"month",re:/(\d*(?:[.,]\d*)?)(?:[ ]?M|months?|Months?)(?![a-zA-z])/g}, //months component
-		{key:"day",re:	/(\d*(?:[.,]\d*)?)(?:[ ]?d|D|days?|Days?)(?![a-zA-z])/g}, //days component
-		{key:"hour",re:	/(\d*(?:[.,]\d*)?)(?:[ ]?h|H|hours?|Hours?)(?![a-zA-z])/g}, //hours component
-		{key:"minute",re:/(\d*(?:[.,]\d*)?)(?:[ ]?m|mins?|Mins?|minutes?|Minutes?)(?![a-zA-z])/g}, //minutes component 
-		{key:"second",re:/(\d*(?:[.,]\d*)?)(?:[ ]?s|S|secs?|Secs?|seconds?|Seconds?)(?![a-zA-z])/g}, //seconds component
-		{key:"millisecond",re:/(\d*(?:[.,]\d*)?)(?:[ ]?ms|millis?|m[sS]ecs?|m[sS]econds?|milli[sS]ecs?|milli[sS]econds?)(?![a-zA-z])/g}, //milliseconds component
+		{key:"year",re:			/(-?\d*(?:[.,]\d*)?)(?:[ ]?y|Y|years?|Years?)(?![a-zA-z])/g}, //years component
+		{key:"month",re:			/(-?\d*(?:[.,]\d*)?)(?:[ ]?M|months?|Months?)(?![a-zA-z])/g}, //months component
+		{key:"day",re:				/(-?\d*(?:[.,]\d*)?)(?:[ ]?d|D|days?|Days?)(?![a-zA-z])/g}, //days component
+		{key:"hour",re:			/(-?\d*(?:[.,]\d*)?)(?:[ ]?h|H|hours?|Hours?)(?![a-zA-z])/g}, //hours component
+		{key:"minute",re:			/(-?\d*(?:[.,]\d*)?)(?:[ ]?m|mins?|Mins?|minutes?|Minutes?)(?![a-zA-z])/g}, //minutes component 
+		{key:"second",re:		/(-?\d*(?:[.,]\d*)?)(?:[ ]?s|S|secs?|Secs?|seconds?|Seconds?)(?![a-zA-z])/g}, //seconds component
+		{key:"millisecond",re:	/(-?\d*(?:[.,]\d*)?)(?:[ ]?ms|millis?|m[sS]ecs?|m[sS]econds?|milli[sS]ecs?|milli[sS]econds?)(?![a-zA-z])/g}, //milliseconds component
 	];
 /* regexp explanation for each component eg for year
 	/								//start regexp
 		(									//capturing group 1 number of years
+			-?									//optional negative number
 			\d*								//zero or more digits
 			(?:								//non capturing group
 				[.,]								//matches single character (point or ,)
@@ -36,7 +37,7 @@ function _parseDurationString(d,durStr){
 		//for multiple matches on same regegexp we could use exec
 		while (matchMade = _durationRegexp[i].re.exec(durStr)) {
 			//console.log(matchMade)
-			d[_durationRegexp[i].key]+=parseFloat("0"+(matchMade[1]||"").replace(",","."));
+			d[_durationRegexp[i].key]+=parseFloat((matchMade[1]||"0").replace(",","."));
 		}
 		
 		/*
@@ -49,9 +50,11 @@ function _parseDurationString(d,durStr){
 	return d;
 }
 var duration=function(){
+	
 	return new XaDuration([].slice.call(arguments));
 }
-function XaDuration(){
+function XaDuration(initArray){
+	
 	this.year=0;
 	this.month=0;
 	this.day=0;
@@ -59,8 +62,10 @@ function XaDuration(){
 	this.minute=0;
 	this.second=0;
 	this.millisecond=0;
+	this.normalized=false;
 	//this.dayReserve=0; //hold converted month decimals in days, to calculate when really needed
-	this.init([].slice.call(arguments));
+	this.init(initArray);
+	
 }
 XaDuration.prototype._keyOrder=[ 'year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond' ]
 XaDuration.prototype.init=function(a){
@@ -86,6 +91,7 @@ XaDuration.prototype.init=function(a){
 			 }
 		},this)
 	}
+	
 }
 /*
 we should normalize the floating values to do calculations with dates
@@ -102,7 +108,7 @@ So there is a break in normalization between day and month setting apart month a
 var _conversionTable={
 	year:{
 		conv:function(x){return x*12},
-		to:"year"
+		to:"month"
 	},
 	/*month:{
 		conv:function(x){
@@ -135,11 +141,44 @@ XaDuration.prototype.normalize=function(){
 		if(!_conversionTable.hasOwnProperty(key)){
 			continue;
 		}
-		dec=this[key]*10%10/10
+		
+		dec=this[key]*10%10/10;
+		
 		this[key]=this[key]-dec;
 		this[_conversionTable[key].to]+=_conversionTable[key].conv(dec);
+		
+	}
+	this.normalized=((this.month*10%10/10)===0)
+	return this;
+}
+XaDuration.prototype.addDuration=function(dur){
+	var key,i,len;
+	for (i=0,len=this._keyOrder.length;i<len;i++){
+		key=this._keyOrder[i]
+		if(dur.hasOwnProperty(key)&&typeof dur[key]==="number"){
+			this[key]+=dur[key];
+		}
 	}
 	return this;
+}
+XaDuration.prototype.removeIntervalOfType=function(type,value){
+	
+	if(~this._keyOrder.indexOf(type) ){
+		value=(typeof value==="number"?value:this[type]);
+		this[type]-=value;
+		return value;
+	}
+	else{
+		return 0;
+		//throw typeError("Invalid interval type");
+	}
+}
+XaDuration.prototype.normalizeMonth=function(numberOfDays){
+	var dec=this.month*10%10/10;
+	console.log(this.month+"-"+dec)	
+	this.month=this.month-dec;
+	this.day+=numberOfDays*dec;
+	return this.normalize();
 }
 /*console.time('parser')
 for (i=0;i<10000;i++) {

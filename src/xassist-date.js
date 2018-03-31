@@ -289,6 +289,35 @@ XaDate.prototype._addBig=function(dur){
 	//console.log("after: "+this.toLocaleString()+")
 	
 }
+XaDate.prototype.format=function(formatStr){
+	//formatStr can be
+	//d: day without leading zero
+	//dd: day with leading zero
+	//ddd: short day string
+	//dddd: long day string
+	//ddddd:single letter day string (may be more d's)
+	//M:month without leading zero
+	//MM or Mm:month with leading zero
+	//mmm: short month string
+	//mmmm: long month string
+	//mmmmm: single letter month (may be more m's)
+	//y or yy: 2digit year
+	//yyy or yyyyyy: 4digit year
+	//h: hour without leading zero
+	//hh:hour with leading zero (or more h's)
+	//m: minute without leading zero
+	//mm: minute with leading zero
+	//s: second without leading zero
+	//ss: second with leading zero (or more s's)
+	//.000 or ,000: any number of zero's is for the deci,centi,milliseconds, ...
+	//all other characters are repeated as such in the string
+	//the difference between m for minutes or month is made by the capitalization, at least one of the m's for (a one or two letter match) should be capitalized for months
+	//all other strings could be capitalized or not.
+	//to escape the characters use a \ before the matching character eg \mmm prints mmm
+	
+	
+	
+}
 XaDate.prototype.add=function(dur/*,firstBig*/){
 	var args=[].slice.call(arguments);
 	var firstBig=args.pop();

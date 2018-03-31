@@ -290,6 +290,7 @@ XaDate.prototype._addBig=function(dur){
 	
 }
 XaDate.prototype.format=function(formatStr){
+	/*
 	//formatStr can be
 	//d: day without leading zero
 	//dd: day with leading zero
@@ -314,8 +315,36 @@ XaDate.prototype.format=function(formatStr){
 	//the difference between m for minutes or month is made by the capitalization, at least one of the m's for (a one or two letter match) should be capitalized for months
 	//all other strings could be capitalized or not.
 	//to escape the characters use a \ before the matching character eg \mmm prints mmm
-	
-	
+	*/
+	var matchingChars=["d","D","m","M","y","Y","h","H","s","S",".",","];
+	var result="";
+	var matchingCombos={
+		day:/[dD]+/,
+		month:/M[Mm]?|[Mm]{3,}/,
+		year:/y+/,
+		hour:/h+/,
+		minute:/m{1,2}/,
+		second:/s+/,
+		millisecond:/[,.]0+/
+	}
+	var escaped=false;
+	var escapeChar="/";
+	var character;
+	var currentMatch="";
+	var 
+	for (var i=0,len= formatStr.length;i<len;i++){
+		character=text[i]
+		if(!~matchingChars.indexOf(character)){
+			//not predefined matching chars
+			result+=text[i];
+			//escaped means next match will be escaped
+			escaped=(character===escapeChar)
+			
+		}
+		else if(!matchFound{
+			//matchFound=true;
+		}
+	}
 	
 }
 XaDate.prototype.add=function(dur/*,firstBig*/){

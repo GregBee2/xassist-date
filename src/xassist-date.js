@@ -314,38 +314,97 @@ XaDate.prototype.format=function(formatStr){
 	//all other characters are repeated as such in the string
 	//the difference between m for minutes or month is made by the capitalization, at least one of the m's for (a one or two letter match) should be capitalized for months
 	//all other strings could be capitalized or not.
-	//to escape the characters use a \ before the matching character eg \mmm prints mmm
+	//to escape the characters use a ^  before the matching character eg ^mmm prints mmm
 	*/
-	var matchingChars=["d","D","m","M","y","Y","h","H","s","S",".",","];
+	
+	/*var matchingChars=["d","D","m","M","y","Y","h","H","s","S",".",","];
 	var result="";
 	var matchingCombos={
-		day:/[dD]+/,
-		month:/M[Mm]?|[Mm]{3,}/,
-		year:/y+/,
-		hour:/h+/,
-		minute:/m{1,2}/,
-		second:/s+/,
-		millisecond:/[,.]0+/
-	}
-	var escaped=false;
-	var escapeChar="/";
-	var character;
-	var currentMatch="";
-	var 
-	for (var i=0,len= formatStr.length;i<len;i++){
-		character=text[i]
-		if(!~matchingChars.indexOf(character)){
-			//not predefined matching chars
-			result+=text[i];
-			//escaped means next match will be escaped
-			escaped=(character===escapeChar)
-			
+		day:/(?:[^\\/dD]|^)([dD]+)/,
+		month:/(?:[^\\/Mm]|^)(M[Mm]?|[Mm]{3,})/,
+		year:/(?:[^\\/yY]|^)([yY]+)/,
+		hour:/(?:[^\\/hH]|^)([hH]+)/,
+		minute:/(?:[^\\/m]|^)(m{1,2})/,
+		second:/(?:[^\\/sS]|^)([sS]+)/,
+		millisecond:/(?:[^\\/,.]|^)([,.]0+)/
+	}*/
+	var matchResult={
+		month:[
+			function(d){return (d.getMonth()+1).toString();},
+			function(d){return ("0"+(d.getMonth()+1)).slice(-2);},
+			function(d){return d.month("short");},
+			function(d){return d.month("long");},
+			function(d){return d.month("abbreviation");}
+		],
+		day:[
+			function(d){return (d.getDate()).toString();},
+			function(d){return ("0"+d.getDate()).slice(-2);},
+			function(d){return d.getWeekDay("short");},
+			function(d){return d.getWeekDay("long");},
+			function(d){return d.getWeekDay("abbreviation");}
+		],
+		year:[
+			function(d){return d.getFullYear().toString().slice(-2).toString();},
+			function(d){return d.getFullYear().toString();},
+		],
+		/*minute:[
+			function(d){return (d.getMinutes()).toString();},
+			function(d){return ("0"+d.getMinutes()).slice(-2);}
+		],
+		hour:[
+			function(d){return (d.getHours()).toString();},
+			function(d){return ("0"+d.getHours()).slice(-2);}
+		],
+		second:[
+			function(d){return (d.getSeconds()).toString();},
+			function(d){return ("0"+d.getSeconds()).slice(-2);}
+		],*/
+		time:[
+			function(d,fn){return (d[fn]()).toString();},
+			function(d,fn){return ("0"+d[fn]()).slice(-2);}
+		],
+		millisecond:[
+			function(d,len){return d.getMilliseconds().toString().slice(0,len);}
+		]
+	};
+	var me=this;
+	function getFormattedString(matchType){
+		var firstChar=matchType[0];
+		var matchLength=matchType.length;
+		if (firstChar==="M"||(firstChar==="m"&&matchLength>2)){
+			return matchResult.month[Math.min(matchLength,5)-1](me);
 		}
-		else if(!matchFound{
-			//matchFound=true;
+		else if (firstChar==="d"||firstChar==="D"){
+			return matchResult.day[Math.min(matchLength,5)-1](me);
+		}
+		else if (firstChar==="y"||firstChar==="Y"){
+			return matchResult.year[(matchLength>2)+0](me);
+		}
+		else if (firstChar==="m"&&matchLength<3){
+			return matchResult.time[matchLength-1](me,"getMinutes");
+		}
+		else if (firstChar==="s"||firstChar==="S"){
+			return matchResult.time[Math.min(matchLength,2)-1](me,"getSeconds");
+		}
+		else if (firstChar==="h"||firstChar==="H"){
+			return matchResult.time[Math.min(matchLength,2)-1](me,"getHours");
+		}
+		else if (firstChar==="."||firstChar===","){
+			return matchResult.millisecond[0](me,matchLength-1);
 		}
 	}
-	
+	//var reDateString=/(?:[^\\/dD]|^)[dD]+|(?:[^\\/Mm]|^)M[Mm]?|[Mm]{3,}|(?:[^\\/yY]|^)[yY]+|(?:[^\\/hH]|^)[hH]+|(?:[^\\/m]|^)m{1,2}|(?:[^\\/sS]|^)[sS]+|(?:[^\\/,.]|^)[,.]0+/g;
+	var reDateString=/[\s\S]([dD]+|M[Mm]?|[Mm]{3,}|[yY]+|[hH]+|m{1,2}|[sS]+|[,.]0+)/g;
+	return ("1"+formatStr).replace(reDateString,function(m){
+		var firstChar=m[0];
+		var match=m.slice(1);
+		if(firstChar==="^"){
+			return match;
+		}
+		else{
+			return firstChar+getFormattedString(match);
+		}
+	}).slice(1)
 }
 XaDate.prototype.add=function(dur/*,firstBig*/){
 	var args=[].slice.call(arguments);

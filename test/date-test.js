@@ -548,4 +548,19 @@ tape("date().add(): adds duration to date", function(test){
 	*/
 	test.end();
 })
-
+tape("date().format(): returns formatted date time string", function(test){
+	var a=date();
+	console.log(a.format("^y:y ^yy:yy ^yyy:yyy ^yyyy:yyyy" ));
+	console.log(a.format("^d:d ^dd:dd ^ddd:ddd ^dddd:dddd ^ddddd:ddddd ^dddddddddddddddddd:ddddddddddddddddddddd" ));
+	console.log(a.format("^M:M ^MM:MM ^Mm:Mm ^mmm:mmm ^mmmm:mmmm ^mmmmm:mmmmm ^mmmmmmmmmm:mmmmmmmmmmmm" ));
+	console.log(a.format("^h:h ^hh:hh ^hhh:hhh"));
+	console.log(a.format("^m:m ^mm:mm ^mmm:mmm"));
+	console.log(a.format("^s:s ^ss:ss ^sss:sss"));
+	console.log(a.format("^.:. ^.0:.0 ^.00:.00 ^.000:.000 ^.0000:.0000"));
+	console.log(a.format("^,:, ^,0:,0 ^,00:,00 ^,000:,000 ^,0000:,0000"));
+	
+	test.ok(true,
+		"date.format(\"y yy yyy yyyy\") returns correct year"
+	);
+	test.end();
+})

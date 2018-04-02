@@ -344,7 +344,7 @@ XaDate.prototype.format=function(formatStr){
 			function(d){return d.getWeekDay("abbreviation");}
 		],
 		year:[
-			function(d){return d.getFullYear().toString().slice(-2).toString();},
+			function(d){return d.getFullYear().toString().slice(-2)},
 			function(d){return d.getFullYear().toString();},
 		],
 		/*minute:[
@@ -396,8 +396,7 @@ XaDate.prototype.format=function(formatStr){
 	//var reDateString=/(?:[^\\/dD]|^)[dD]+|(?:[^\\/Mm]|^)M[Mm]?|[Mm]{3,}|(?:[^\\/yY]|^)[yY]+|(?:[^\\/hH]|^)[hH]+|(?:[^\\/m]|^)m{1,2}|(?:[^\\/sS]|^)[sS]+|(?:[^\\/,.]|^)[,.]0+/g;
 	var reDateString=/[\s\S]([dD]+|M[Mm]?|[Mm]{3,}|[yY]+|[hH]+|m{1,2}|[sS]+|[,.]0+)/g;
 	return ("1"+formatStr).replace(reDateString,function(m){
-		var firstChar=m[0];
-		var match=m.slice(1);
+		var firstChar=m[0],match=m.slice(1);
 		if(firstChar==="^"){
 			return match;
 		}
@@ -405,6 +404,19 @@ XaDate.prototype.format=function(formatStr){
 			return firstChar+getFormattedString(match);
 		}
 	}).slice(1)
+}
+XaDate.prototype.until=function(otherDate){
+	var result;
+	if(!_validDate(otherDate)){
+		//try to create other date object
+		otherDate=new XaDate([].slice.call(arguments));
+	}
+	if(!otherDate.isValid()){
+		throw new TypeError('until() needs a date or parseable dateargumenrs');
+	}
+	result=otherDate.valueOf()-this.valueOf()
+	
+	
 }
 XaDate.prototype.add=function(dur/*,firstBig*/){
 	var args=[].slice.call(arguments);

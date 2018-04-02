@@ -406,7 +406,6 @@ XaDate.prototype.format=function(formatStr){
 	}).slice(1)
 }
 XaDate.prototype.until=function(otherDate){
-	var result;
 	if(!_validDate(otherDate)){
 		//try to create other date object
 		otherDate=new XaDate([].slice.call(arguments));
@@ -414,7 +413,7 @@ XaDate.prototype.until=function(otherDate){
 	if(!otherDate.isValid()){
 		throw new TypeError('until() needs a date or parseable dateargumenrs');
 	}
-	result=otherDate.valueOf()-this.valueOf()
+	return duration(otherDate.valueOf()-this.valueOf());
 	
 	
 }

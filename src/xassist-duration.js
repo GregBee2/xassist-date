@@ -79,7 +79,6 @@ XaDuration.prototype.init=function(a){
 			this.millisecond+=a[0];
 		}
 		else if(typeof a[0]==="object"){
-			//milliseconds is default value
 			object(this).mergeUnique(a[0]);
 		}
 	}

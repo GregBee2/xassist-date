@@ -418,16 +418,19 @@ XaDate.prototype.until=function(otherDate){
 	
 }
 XaDate.prototype.add=function(dur/*,firstBig*/){
+	//console.log(dur);
 	var args=[].slice.call(arguments);
 	var firstBig=args.pop();
 	if(typeof firstBig!=="boolean"){
 		args.push(firstBig)
 		firstBig=true; //this makes a difference in subtracting durations
 	}
+	//console.log(dur);
 	if(dur.constructor.name!=="XaDuration"){
 		dur=duration.apply(null,args)
 	}
-	dur.normalize();
+	
+	dur.normalizeDown();
 	if (firstBig){
 		this._addBig(dur)
 		dur.normalizeMonth(this.daysInMonth());

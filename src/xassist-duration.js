@@ -1,5 +1,9 @@
 import { object } from "@xassist/xassist-object";
 //var { object } =require("@xassist/xassist-object");
+function getDecimal(num){
+	return+((num<0?"-.":".")+num.toString().split(".")[1])||0
+}
+
 
 var _durationRegexp=[
 		{key:"year",re:			/(-?\d*(?:[.,]\d*)?)(?:[ ]?y|Y|years?|Years?)(?![a-zA-z])/g}, //years component
@@ -69,7 +73,6 @@ function XaDuration(initArray){
 }
 XaDuration.prototype._keyOrder=[ 'year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond' ]
 XaDuration.prototype.init=function(a){
-	
 	if (a.length===1){
 		if(typeof a[0]==="string"){
 			_parseDurationString(this,a[0])
@@ -92,6 +95,7 @@ XaDuration.prototype.init=function(a){
 	}
 	
 }
+
 /*
 we should normalize the floating values to do calculations with dates
 this works for 
@@ -104,52 +108,145 @@ exception
 -month=>day (*30 or *31 or *28 or even *29)
 So there is a break in normalization between day and month setting apart month and year!
 */
-var _conversionTable={
+var _conversionCoefficients={
 	year:{
-		conv:function(x){return x*12},
-		to:"month"
+		coeff:7/(30.436875*12),
+		exactType:"big"
 	},
-	/*month:{
-		conv:function(x){
-			return x;
-		},
-		to:"dayReserve"
-	},*/
+	month:{
+		coeff:7/30.436875,
+		exactType:"big"
+	},
+	week:{
+		coeff:1,
+		exactType:"small"
+	},
 	day:{
-		conv:function(x){return x*24},
-		to:"hour"
+		coeff:7,
+		exactType:"small"
 	},
 	hour:{
-		conv:function(x){return x*60},
-		to:"minute"
+		coeff:168,
+		exactType:"small"
 	},
 	minute:{
-		conv:function(x){return x*60},
-		to:"second"
+		coeff:10080,
+		exactType:"small"
 	},
 	second:{
-		conv:function(x){return x*1000},
-		to:"millisecond"
+		coeff:604800,
+		exactType:"small"
 	},
+	millisecond:{
+		coeff:604800000,
+		exactType:"small"
+	}
+}
+XaDuration.prototype.normalize=function(exact){
+	exact=(typeof exact==="undefined"?true:!!exact);
+	//first we normalize up to upscale the factors thats needed like 12months becomes 1 year
+	console.log("start normalizing")
+	console.log("************")
+	console.log(this)
+	
+	this.normalizeUp(exact);
+	console.log("\t scaling up")
+	console.log("************")
+	console.log(this)
+	//the only factor that is decimal is the one from day to month so
+	//after upscaling the only attribute potentially remaining decimal is day
+	//now we can normalize down to eliminate decimals
+	if(!this.normalized){
+		this.normalizeDown(exact)
+		//this could introduce other scaling factors that should be upscaled (added hours so hours fall above 24 or lower)
+		//since those all fall 
+	}
+	console.log("\t scaling DOWN")
+	console.log("************")
+	console.log(this)
+	
 }
 
-XaDuration.prototype.normalize=function(){
-	var key,dec;
+
+
+XaDuration.prototype.normalizeDown=function(exact){
+	var key,dec,nextKey,factor;
+	exact=(typeof exact==="undefined"?true:!!exact);
 	for (var i=0,len=this._keyOrder.length;i<len;i++){
 		key=this._keyOrder[i];
-		if(!_conversionTable.hasOwnProperty(key)){
-			continue;
+		nextKey=this._keyOrder[i+1];
+		if(nextKey){
+			factor=this.getConversionFactor(key,nextKey);
+			if(!exact||factor.exact){
+				dec=getDecimal(this[key]);
+				this[key]=this[key]-dec;
+				this[nextKey]+=dec*factor.factor;
+			}
 		}
-		
-		dec=this[key]*10%10/10;
-		
-		this[key]=this[key]-dec;
-		this[_conversionTable[key].to]+=_conversionTable[key].conv(dec);
-		
 	}
-	this.normalized=((this.month*10%10/10)===0)
+	//month is only one that can be decimal because only conversion thaht can be skipped with exact
+	//we should not check millisecond because it is allowed to be decimal 
+	this.normalized=((getDecimal(this.month))===0);
 	return this;
 }
+XaDuration.prototype.normalizeUp=function(exact){
+	var key,nextKey,factor,oldVal,i=this._keyOrder.length,normalized=true;
+	exact=(typeof exact==="undefined"?true:!!exact)
+	while(i--){
+		key=this._keyOrder[i];
+		nextKey=this._keyOrder[i-1];
+		if(nextKey){
+			factor=this.getConversionFactor(nextKey,key);
+			if(!exact||factor.exact){
+				oldVal=this[key];
+				this[key]=oldVal%factor.factor;
+				this[nextKey]+=(oldVal-this[key])/factor.factor;
+			}
+		}
+		if(i!==this._keyOrder.length-1){
+			normalized=normalized&&((this[key]*10%10/10)===0)
+		}
+	}
+	this.normalized=normalized;
+	return this;
+}
+XaDuration.prototype.getConversionFactor=function(fromUnit,toUnit){
+	if(_conversionCoefficients.hasOwnProperty(fromUnit)&&_conversionCoefficients.hasOwnProperty(toUnit)){
+		return {
+			factor:(_conversionCoefficients[toUnit].coeff/_conversionCoefficients[fromUnit].coeff),
+			exact:(_conversionCoefficients[toUnit].exactType===_conversionCoefficients[fromUnit].exactType)
+		}
+	}
+	else{
+		throw typeError("Invalid unit conversion type");
+	}
+}
+XaDuration.prototype.valueOf=function(){
+	//returns number of milliseconds
+	var result=0,key;
+	for (var i=0,len=this._keyOrder.length;i<len;i++){
+		key=this._keyOrder[i];
+		result+=(this.getConversionFactor(key,"millisecond").factor*this[key]);
+	}
+	return result
+}
+XaDuration.prototype.format=function(){
+	var result=[],key,v=this.valueOf(),dur=duration(Math.abs(v));
+	dur.normalize(false)
+	console.log("SECOND ROUND")
+	dur.normalize(false)
+	for (var i=0,len=this._keyOrder.length;i<len;i++){
+		key=this._keyOrder[i];
+		if(dur[key]!==0){
+			result.push(dur[key]+" "+key+(Math.abs(dur[key])>1?"s":""));
+		}
+	}
+	if(v<0){
+		result.push("ago")
+	}
+	return result.join(' ')+".";
+}
+
 XaDuration.prototype.addDuration=function(dur){
 	var key,i,len;
 	for (i=0,len=this._keyOrder.length;i<len;i++){
@@ -173,11 +270,11 @@ XaDuration.prototype.removeIntervalOfType=function(type,value){
 	}
 }
 XaDuration.prototype.normalizeMonth=function(numberOfDays){
-	var dec=this.month*10%10/10;
+	var dec=getDecimal(this.month);
 //console.log(this.month+"-"+dec)	
 	this.month=this.month-dec;
 	this.day+=numberOfDays*dec;
-	return this.normalize();
+	return this.normalizeDown();
 }
 /*console.time('parser')
 for (i=0;i<10000;i++) {

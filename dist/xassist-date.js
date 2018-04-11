@@ -2,7 +2,7 @@
 * @preserve
 * https://github.com/GregBee2/xassist-date.git Version 1.1.2.
 *  Copyright 2018 Gregory Beirens.
-*  Created on Wed, 11 Apr 2018 09:27:06 GMT.
+*  Created on Wed, 11 Apr 2018 09:31:25 GMT.
 */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@xassist/xassist-object')) :
@@ -217,7 +217,7 @@
 			}
 		}
 		else{
-			throw typeError("Invalid unit conversion type");
+			throw new TypeError("Invalid unit conversion type");
 		}
 	};
 	XaDuration.prototype.valueOf=function(){

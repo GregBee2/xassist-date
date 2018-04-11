@@ -86,7 +86,6 @@ function checkDateValue(dateStr,valuesExpected,x,i){
 tape("date.stringToDate(): converts date to DateObj", function(test){
 	var invalids=checkDates(invalidDateStrings,date.stringToDate);
 	var valids=checkDates(validDateStrings,date.stringToDate,checkDateValue.bind(null,validDateStrings,expectedResult));
-	//console.log(checkDates(validDateStrings,date.stringToDate,function(x,i){return [x.valueOf(),expectedResult[i%validDateStrings.length]]}))
 	test.ok(invalids.every(x=>x===false),
 		"date.stringToDate() handles invalid dates correctly");
 	
@@ -509,20 +508,23 @@ tape("date().add(): adds duration to date", function(test){
 	
 	a.add("1.5y 3.10M 5d 47h 61.20m 13.157s 1243ms")
 	b.add("1.5y 3.10M 5d 47h 61.20m 13.157s 1243ms",false)
-	test.ok(a.toLocaleString()=="2017-12-9 00:01:26" && a.getMilliseconds()===399,
+	
+	test.ok(a.toLocaleString()=="2017-12-9 00:01:26" && a.getMilliseconds()===400,
 		"date().add() adds correct duration to date "
 	);
-	test.ok(b.toLocaleString()=="2017-12-10 02:25:26" && b.getMilliseconds()===399,
+	test.ok(b.toLocaleString()=="2017-12-10 02:25:26" && b.getMilliseconds()===400,
 		"date().add(duration,false) adds correct duration with first calculating the small units"
 	);
 	//false adds extra day because first adding year to 29 feb gives us 28feb if we add 1 month and then 1 day we get 30 march (true)
 	//	if we first add days we get eg 1 march adding 1year and 1 month gives us 01 april!
 	//false changes the rounding of the month => 0.1*31=>3.1 days instead of 3 days so extra 2hr 24min
-	a=date.stringToDate('2017-12-9 00:01:26.399',"YMD");
-	b=date.stringToDate('2017-12-9 00:01:26.399',"YMD");
+	a=date.stringToDate('2017-12-9 00:01:26.400',"YMD");
+	b=date.stringToDate('2017-12-9 00:01:26.400',"YMD");
 
 	b.add("-1.5y -3.10M -5d -47h -61.20m -13.157s -1243ms",false)
 	a.add("-1.5y -3.10M -5d -47h -61.20m -13.157s -1243ms")
+
+	
 	test.ok(a.toLocaleString()=="2016-2-27 21:36:00" && a.getMilliseconds()===0,
 		"date().add() adds correct duration to date even with negative figures"
 	);
@@ -550,17 +552,36 @@ tape("date().add(): adds duration to date", function(test){
 })
 tape("date().format(): returns formatted date time string", function(test){
 	var a=date();
-	console.log(a.format("^y:y ^yy:yy ^yyy:yyy ^yyyy:yyyy" ));
-	console.log(a.format("^d:d ^dd:dd ^ddd:ddd ^dddd:dddd ^ddddd:ddddd ^dddddddddddddddddd:ddddddddddddddddddddd" ));
-	console.log(a.format("^M:M ^MM:MM ^Mm:Mm ^mmm:mmm ^mmmm:mmmm ^mmmmm:mmmmm ^mmmmmmmmmm:mmmmmmmmmmmm" ));
-	console.log(a.format("^h:h ^hh:hh ^hhh:hhh"));
-	console.log(a.format("^m:m ^mm:mm ^mmm:mmm"));
-	console.log(a.format("^s:s ^ss:ss ^sss:sss"));
-	console.log(a.format("^.:. ^.0:.0 ^.00:.00 ^.000:.000 ^.0000:.0000"));
-	console.log(a.format("^,:, ^,0:,0 ^,00:,00 ^,000:,000 ^,0000:,0000"));
+	test.ok((a.toLocaleString()+"-"+a.getMilliseconds())===a.format("yyy-M-d hh:mm:ss-.000"),
+		"date.format(\"yyy-M-d hh:mm:ss-.000\") works as expected"
+	);
+	test.ok("yyy"===a.format("^yyy"),
+		"date.format(\"^yyy\") caret escapes sequences"
+	);
+	test.end();
+})
+
+tape("date().until(): returns duration until other date given", function(test){
+	var a=date();
 	
-	test.ok(true,
-		"date.format(\"y yy yyy yyyy\") returns correct year"
+	var b=date('2018-04-29 00:00:00')
+	var result=a.until(b);
+	test.ok(a.add(result).valueOf()===b.valueOf(),
+		"date.untill(d) gives duration untill date d"
+	);
+	test.end();
+})
+tape("date().until().format(): returns formatted duration until other date given", function(test){
+	var a=date();
+	var b=date(a.valueOf()+2.00414*2629746*1000);
+	
+	var result=a.until(b)
+
+	test.ok(result.format()==="1 month 30 days 13 hours 30 minutes 33 seconds 148 milliseconds." && result.format()==result.toString(),
+		"date.untill(d).format() returns string with correct values"
+	);
+	test.ok(a.until(date(a.valueOf()).add("3.5Y")).format(0.2)==="4 years." && a.until(date(a.valueOf()).add("-3.5Y")).format(0.2)==="3 years ago." ,
+		"date.untill(d).format(tolerance) calculates the shoretened string with respect to given relative tolerance"
 	);
 	test.end();
 })

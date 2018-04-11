@@ -206,7 +206,7 @@ XaDuration.prototype.getConversionFactor=function(fromUnit,toUnit){
 		}
 	}
 	else{
-		throw typeError("Invalid unit conversion type");
+		throw new typeError("Invalid unit conversion type");
 	}
 }
 XaDuration.prototype.valueOf=function(){

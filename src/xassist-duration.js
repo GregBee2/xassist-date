@@ -145,25 +145,20 @@ var _conversionCoefficients={
 XaDuration.prototype.normalize=function(exact){
 	exact=(typeof exact==="undefined"?true:!!exact);
 	//first we normalize up to upscale the factors thats needed like 12months becomes 1 year
-	console.log("start normalizing")
-	console.log("************")
-	console.log(this)
+
 	
 	this.normalizeUp(exact);
-	console.log("\t scaling up")
-	console.log("************")
-	console.log(this)
+
 	//the only factor that is decimal is the one from day to month so
 	//after upscaling the only attribute potentially remaining decimal is day
 	//now we can normalize down to eliminate decimals
 	if(!this.normalized){
 		this.normalizeDown(exact)
 		//this could introduce other scaling factors that should be upscaled (added hours so hours fall above 24 or lower)
-		//since those all fall 
+		//since those all fall lower then day we should only once scale up if necessary (but we put true to be sure to not change months
+		this.normalizeUp(true);
 	}
-	console.log("\t scaling DOWN")
-	console.log("************")
-	console.log(this)
+
 	
 }
 
@@ -230,15 +225,13 @@ XaDuration.prototype.valueOf=function(){
 	}
 	return result
 }
-XaDuration.prototype.format=function(){
+XaDuration.prototype.toString=function(){
 	var result=[],key,v=this.valueOf(),dur=duration(Math.abs(v));
-	dur.normalize(false)
-	console.log("SECOND ROUND")
 	dur.normalize(false)
 	for (var i=0,len=this._keyOrder.length;i<len;i++){
 		key=this._keyOrder[i];
 		if(dur[key]!==0){
-			result.push(dur[key]+" "+key+(Math.abs(dur[key])>1?"s":""));
+			result.push(dur[key]+" "+key+(dur[key]>1?"s":""));
 		}
 	}
 	if(v<0){
@@ -246,7 +239,48 @@ XaDuration.prototype.format=function(){
 	}
 	return result.join(' ')+".";
 }
+XaDuration.prototype.format=function(tolerance){
+	//tolerance is the relative tolerance that may be accepted in the string representation
+	//tolerance is a percentage eg 0.01=1% and should be given as a numeric value<1 
+	//if tolerance is given as 1 just the largest component
+	//decimals are never given 3.5 years is represented as 3 years 6 months 
+	var result=[],key,
+		v=this.valueOf(),
+		absV=Math.abs(v),
+		dur=duration(absV), //clone duration
+		currentVal=0,
+		relError=1;
+	if(!tolerance){
+		return this.toString();
+	}
+	tolerance=Math.abs(tolerance)
+	tolerance=tolerance>1?1:tolerance;
+	dur.normalize(false);
 
+	for (var i=0,len=this._keyOrder.length;i<len&&relError>=tolerance;i++){
+		key=this._keyOrder[i];
+		if(dur[key]!==0){
+			currentVal+=dur[key]*this.getConversionFactor(key,"millisecond").factor
+			result.push(dur[key]+" "+key+(dur[key]>1?"s":""));
+			relError=1-currentVal/absV;
+			console.log(key)
+			console.log(result)
+			console.log(relError)
+		}
+		
+	}
+	//check if we could lower the relError by adding 1 to last found key (ex. rounding 3.5 years to 4)
+	currentVal+=1*this.getConversionFactor(key,"millisecond").factor;
+	console.log(key)
+	console.log(relError+">="+(-1+currentVal/absV)+":: "+(relError>=(-1+currentVal/absV)).toString())
+	if(relError>=(-1+currentVal/absV)){ //new relative error is negative because we are rounding up
+		result.push(result.pop().split(" ").map(function(v,i){return (i==0?+v+1:v)}).join(" "));
+	}	
+	if(v<0){
+		result.push("ago")
+	}
+	return result.join(' ')+".";
+}
 XaDuration.prototype.addDuration=function(dur){
 	var key,i,len;
 	for (i=0,len=this._keyOrder.length;i<len;i++){

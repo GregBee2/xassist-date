@@ -2,7 +2,7 @@
 * @preserve
 * https://github.com/GregBee2/xassist-date.git Version 1.1.2.
 *  Copyright 2018 Gregory Beirens.
-*  Created on Fri, 30 Mar 2018 18:51:43 GMT.
+*  Created on Wed, 11 Apr 2018 09:15:52 GMT.
 */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@xassist/xassist-object')) :
@@ -11,6 +11,10 @@
 }(this, (function (exports,xassistObject) { 'use strict';
 
 	//var { object } =require("@xassist/xassist-object");
+	function getDecimal(num){
+		return+((num<0?"-.":".")+num.toString().split(".")[1])||0
+	}
+
 
 	var _durationRegexp=[
 			{key:"year",re:			/(-?\d*(?:[.,]\d*)?)(?:[ ]?y|Y|years?|Years?)(?![a-zA-z])/g}, //years component
@@ -38,6 +42,7 @@
 			(?![a-zA-z])					//negative lookahead everything except a-z or A-Z
 		/g							//global match
 	*/
+
 	function _parseDurationString(d,durStr){
 		var matchMade;
 		//parse string
@@ -47,16 +52,8 @@
 			
 			//for multiple matches on same regegexp we could use exec
 			while (matchMade = _durationRegexp[i].re.exec(durStr)) {
-				//console.log(matchMade)
 				d[_durationRegexp[i].key]+=parseFloat((matchMade[1]||"0").replace(",","."));
 			}
-			
-			/*
-			//single match
-			matchMade=durStr.match(_durationRegexp[i].re)
-			if(matchMade&&matchMade[1]){
-				d[_durationRegexp[i].key]+=parseFloat(("0"+matchMade[1]).replace(",","."));
-			}	*/
 		}
 		return d;
 	}
@@ -80,7 +77,6 @@
 	}
 	XaDuration.prototype._keyOrder=[ 'year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond' ];
 	XaDuration.prototype.init=function(a){
-		
 		if (a.length===1){
 			if(typeof a[0]==="string"){
 				_parseDurationString(this,a[0]);
@@ -90,7 +86,6 @@
 				this.millisecond+=a[0];
 			}
 			else if(typeof a[0]==="object"){
-				//milliseconds is default value
 				xassistObject.object(this).mergeUnique(a[0]);
 			}
 		}
@@ -104,6 +99,7 @@
 		}
 		
 	};
+
 	/*
 	we should normalize the floating values to do calculations with dates
 	this works for 
@@ -116,51 +112,174 @@
 	-month=>day (*30 or *31 or *28 or even *29)
 	So there is a break in normalization between day and month setting apart month and year!
 	*/
-	var _conversionTable={
+	var _conversionCoefficients={
 		year:{
-			conv:function(x){return x*12},
-			to:"month"
+			coeff:7/(30.436875*12),
+			exactType:"big"
 		},
-		/*month:{
-			conv:function(x){
-				return x;
-			},
-			to:"dayReserve"
-		},*/
+		month:{
+			coeff:7/30.436875,
+			exactType:"big"
+		},
+		week:{
+			coeff:1,
+			exactType:"small"
+		},
 		day:{
-			conv:function(x){return x*24},
-			to:"hour"
+			coeff:7,
+			exactType:"small"
 		},
 		hour:{
-			conv:function(x){return x*60},
-			to:"minute"
+			coeff:168,
+			exactType:"small"
 		},
 		minute:{
-			conv:function(x){return x*60},
-			to:"second"
+			coeff:10080,
+			exactType:"small"
 		},
 		second:{
-			conv:function(x){return x*1000},
-			to:"millisecond"
+			coeff:604800,
+			exactType:"small"
 		},
+		millisecond:{
+			coeff:604800000,
+			exactType:"small"
+		}
+	};
+	XaDuration.prototype.normalize=function(exact){
+		exact=(typeof exact==="undefined"?true:!!exact);
+		//first we normalize up to upscale the factors thats needed like 12months becomes 1 year
+
+		
+		this.normalizeUp(exact);
+
+		//the only factor that is decimal is the one from day to month so
+		//after upscaling the only attribute potentially remaining decimal is day
+		//now we can normalize down to eliminate decimals
+		if(!this.normalized){
+			this.normalizeDown(exact);
+			//this could introduce other scaling factors that should be upscaled (added hours so hours fall above 24 or lower)
+			//since those all fall lower then day we should only once scale up if necessary (but we put true to be sure to not change months
+			this.normalizeUp(true);
+		}
+
+		
 	};
 
-	XaDuration.prototype.normalize=function(){
-		var key,dec;
+
+
+	XaDuration.prototype.normalizeDown=function(exact){
+		var key,dec,nextKey,factor;
+		exact=(typeof exact==="undefined"?true:!!exact);
 		for (var i=0,len=this._keyOrder.length;i<len;i++){
 			key=this._keyOrder[i];
-			if(!_conversionTable.hasOwnProperty(key)){
-				continue;
+			nextKey=this._keyOrder[i+1];
+			if(nextKey){
+				factor=this.getConversionFactor(key,nextKey);
+				if(!exact||factor.exact){
+					dec=getDecimal(this[key]);
+					this[key]=this[key]-dec;
+					this[nextKey]+=dec*factor.factor;
+				}
+			}
+		}
+		//month is only one that can be decimal because only conversion thaht can be skipped with exact
+		//we should not check millisecond because it is allowed to be decimal 
+		this.normalized=((getDecimal(this.month))===0);
+		return this;
+	};
+	XaDuration.prototype.normalizeUp=function(exact){
+		var key,nextKey,factor,oldVal,i=this._keyOrder.length,normalized=true;
+		exact=(typeof exact==="undefined"?true:!!exact);
+		while(i--){
+			key=this._keyOrder[i];
+			nextKey=this._keyOrder[i-1];
+			if(nextKey){
+				factor=this.getConversionFactor(nextKey,key);
+				if(!exact||factor.exact){
+					oldVal=this[key];
+					this[key]=oldVal%factor.factor;
+					this[nextKey]+=(oldVal-this[key])/factor.factor;
+				}
+			}
+			if(i!==this._keyOrder.length-1){
+				normalized=normalized&&((this[key]*10%10/10)===0);
+			}
+		}
+		this.normalized=normalized;
+		return this;
+	};
+	XaDuration.prototype.getConversionFactor=function(fromUnit,toUnit){
+		if(_conversionCoefficients.hasOwnProperty(fromUnit)&&_conversionCoefficients.hasOwnProperty(toUnit)){
+			return {
+				factor:(_conversionCoefficients[toUnit].coeff/_conversionCoefficients[fromUnit].coeff),
+				exact:(_conversionCoefficients[toUnit].exactType===_conversionCoefficients[fromUnit].exactType)
+			}
+		}
+		else{
+			throw typeError("Invalid unit conversion type");
+		}
+	};
+	XaDuration.prototype.valueOf=function(){
+		//returns number of milliseconds
+		var result=0,key;
+		for (var i=0,len=this._keyOrder.length;i<len;i++){
+			key=this._keyOrder[i];
+			result+=(this.getConversionFactor(key,"millisecond").factor*this[key]);
+		}
+		return result
+	};
+	XaDuration.prototype.toString=function(){
+		var result=[],key,v=this.valueOf(),dur=duration(Math.abs(v));
+		dur.normalize(false);
+		for (var i=0,len=this._keyOrder.length;i<len;i++){
+			key=this._keyOrder[i];
+			if(dur[key]!==0){
+				result.push(dur[key]+" "+key+(dur[key]>1?"s":""));
+			}
+		}
+		if(v<0){
+			result.push("ago");
+		}
+		return result.join(' ')+".";
+	};
+	XaDuration.prototype.format=function(tolerance){
+		//tolerance is the relative tolerance that may be accepted in the string representation
+		//tolerance is a percentage eg 0.01=1% and should be given as a numeric value<1 
+		//if tolerance is given as 1 just the largest component
+		//decimals are never given 3.5 years is represented as 3 years 6 months 
+		var result=[],key,
+			v=this.valueOf(),
+			absV=Math.abs(v),
+			dur=duration(absV), //clone duration
+			currentVal=0,
+			relError=1;
+		if(!tolerance){
+			return this.toString();
+		}
+		tolerance=Math.abs(tolerance);
+		tolerance=tolerance>1?1:tolerance;
+		dur.normalize(false);
+
+		for (var i=0,len=this._keyOrder.length;i<len&&relError>=tolerance;i++){
+			key=this._keyOrder[i];
+			if(dur[key]!==0){
+				currentVal+=dur[key]*this.getConversionFactor(key,"millisecond").factor;
+				result.push(dur[key]+" "+key+(dur[key]>1?"s":""));
+				relError=1-currentVal/absV;
+
 			}
 			
-			dec=this[key]*10%10/10;
-			
-			this[key]=this[key]-dec;
-			this[_conversionTable[key].to]+=_conversionTable[key].conv(dec);
-			
 		}
-		this.normalized=((this.month*10%10/10)===0);
-		return this;
+		//check if we could lower the relError by adding 1 to last found key (ex. rounding 3.5 years to 4)
+		currentVal+=1*this.getConversionFactor(key,"millisecond").factor;
+		if(relError>=(-1+currentVal/absV)){ //new relative error is negative because we are rounding up
+			result.push(result.pop().split(" ").map(function(v,i){return (i==0?+v+1:v)}).join(" "));
+		}	
+		if(v<0){
+			result.push("ago");
+		}
+		return result.join(' ')+".";
 	};
 	XaDuration.prototype.addDuration=function(dur){
 		var key,i,len;
@@ -185,11 +304,10 @@
 		}
 	};
 	XaDuration.prototype.normalizeMonth=function(numberOfDays){
-		var dec=this.month*10%10/10;
-	//console.log(this.month+"-"+dec)	
+		var dec=getDecimal(this.month);
 		this.month=this.month-dec;
 		this.day+=numberOfDays*dec;
-		return this.normalize();
+		return this.normalizeDown();
 	};
 
 	var _dateDict = {
@@ -481,17 +599,148 @@
 		//console.log("after: "+this.toLocaleString()+")
 		
 	};
+	XaDate.prototype.format=function(formatStr){
+		/*
+		//formatStr can be
+		//d: day without leading zero
+		//dd: day with leading zero
+		//ddd: short day string
+		//dddd: long day string
+		//ddddd:single letter day string (may be more d's)
+		//M:month without leading zero
+		//MM or Mm:month with leading zero
+		//mmm: short month string
+		//mmmm: long month string
+		//mmmmm: single letter month (may be more m's)
+		//y or yy: 2digit year
+		//yyy or yyyyyy: 4digit year
+		//h: hour without leading zero
+		//hh:hour with leading zero (or more h's)
+		//m: minute without leading zero
+		//mm: minute with leading zero
+		//s: second without leading zero
+		//ss: second with leading zero (or more s's)
+		//.000 or ,000: any number of zero's is for the deci,centi,milliseconds, ...
+		//all other characters are repeated as such in the string
+		//the difference between m for minutes or month is made by the capitalization, at least one of the m's for (a one or two letter match) should be capitalized for months
+		//all other strings could be capitalized or not.
+		//to escape the characters use a ^  before the matching character eg ^mmm prints mmm
+		*/
+		
+		/*var matchingChars=["d","D","m","M","y","Y","h","H","s","S",".",","];
+		var result="";
+		var matchingCombos={
+			day:/(?:[^\\/dD]|^)([dD]+)/,
+			month:/(?:[^\\/Mm]|^)(M[Mm]?|[Mm]{3,})/,
+			year:/(?:[^\\/yY]|^)([yY]+)/,
+			hour:/(?:[^\\/hH]|^)([hH]+)/,
+			minute:/(?:[^\\/m]|^)(m{1,2})/,
+			second:/(?:[^\\/sS]|^)([sS]+)/,
+			millisecond:/(?:[^\\/,.]|^)([,.]0+)/
+		}*/
+		var matchResult={
+			month:[
+				function(d){return (d.getMonth()+1).toString();},
+				function(d){return ("0"+(d.getMonth()+1)).slice(-2);},
+				function(d){return d.month("short");},
+				function(d){return d.month("long");},
+				function(d){return d.month("abbreviation");}
+			],
+			day:[
+				function(d){return (d.getDate()).toString();},
+				function(d){return ("0"+d.getDate()).slice(-2);},
+				function(d){return d.getWeekDay("short");},
+				function(d){return d.getWeekDay("long");},
+				function(d){return d.getWeekDay("abbreviation");}
+			],
+			year:[
+				function(d){return d.getFullYear().toString().slice(-2)},
+				function(d){return d.getFullYear().toString();},
+			],
+			/*minute:[
+				function(d){return (d.getMinutes()).toString();},
+				function(d){return ("0"+d.getMinutes()).slice(-2);}
+			],
+			hour:[
+				function(d){return (d.getHours()).toString();},
+				function(d){return ("0"+d.getHours()).slice(-2);}
+			],
+			second:[
+				function(d){return (d.getSeconds()).toString();},
+				function(d){return ("0"+d.getSeconds()).slice(-2);}
+			],*/
+			time:[
+				function(d,fn){return (d[fn]()).toString();},
+				function(d,fn){return ("0"+d[fn]()).slice(-2);}
+			],
+			millisecond:[
+				function(d,len){return d.getMilliseconds().toString().slice(0,len);}
+			]
+		};
+		var me=this;
+		function getFormattedString(matchType){
+			var firstChar=matchType[0];
+			var matchLength=matchType.length;
+			if (firstChar==="M"||(firstChar==="m"&&matchLength>2)){
+				return matchResult.month[Math.min(matchLength,5)-1](me);
+			}
+			else if (firstChar==="d"||firstChar==="D"){
+				return matchResult.day[Math.min(matchLength,5)-1](me);
+			}
+			else if (firstChar==="y"||firstChar==="Y"){
+				return matchResult.year[(matchLength>2)+0](me);
+			}
+			else if (firstChar==="m"&&matchLength<3){
+				return matchResult.time[matchLength-1](me,"getMinutes");
+			}
+			else if (firstChar==="s"||firstChar==="S"){
+				return matchResult.time[Math.min(matchLength,2)-1](me,"getSeconds");
+			}
+			else if (firstChar==="h"||firstChar==="H"){
+				return matchResult.time[Math.min(matchLength,2)-1](me,"getHours");
+			}
+			else if (firstChar==="."||firstChar===","){
+				return matchResult.millisecond[0](me,matchLength-1);
+			}
+		}
+		//var reDateString=/(?:[^\\/dD]|^)[dD]+|(?:[^\\/Mm]|^)M[Mm]?|[Mm]{3,}|(?:[^\\/yY]|^)[yY]+|(?:[^\\/hH]|^)[hH]+|(?:[^\\/m]|^)m{1,2}|(?:[^\\/sS]|^)[sS]+|(?:[^\\/,.]|^)[,.]0+/g;
+		var reDateString=/[\s\S]([dD]+|M[Mm]?|[Mm]{3,}|[yY]+|[hH]+|m{1,2}|[sS]+|[,.]0+)/g;
+		return ("1"+formatStr).replace(reDateString,function(m){
+			var firstChar=m[0],match=m.slice(1);
+			if(firstChar==="^"){
+				return match;
+			}
+			else{
+				return firstChar+getFormattedString(match);
+			}
+		}).slice(1)
+	};
+	XaDate.prototype.until=function(otherDate){
+		if(!_validDate(otherDate)){
+			//try to create other date object
+			otherDate=new XaDate([].slice.call(arguments));
+		}
+		if(!otherDate.isValid()){
+			throw new TypeError('until() needs a date or parseable dateargumenrs');
+		}
+		return duration(otherDate.valueOf()-this.valueOf());
+		
+		
+	};
 	XaDate.prototype.add=function(dur/*,firstBig*/){
+		//console.log(dur);
 		var args=[].slice.call(arguments);
 		var firstBig=args.pop();
 		if(typeof firstBig!=="boolean"){
 			args.push(firstBig);
 			firstBig=true; //this makes a difference in subtracting durations
 		}
+		//console.log(dur);
 		if(dur.constructor.name!=="XaDuration"){
 			dur=duration.apply(null,args);
 		}
-		dur.normalize();
+		
+		dur.normalizeDown();
 		if (firstBig){
 			this._addBig(dur);
 			dur.normalizeMonth(this.daysInMonth());

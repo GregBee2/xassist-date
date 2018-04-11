@@ -31,6 +31,7 @@ var _durationRegexp=[
 		(?![a-zA-z])					//negative lookahead everything except a-z or A-Z
 	/g							//global match
 */
+
 function _parseDurationString(d,durStr){
 	var matchMade;
 	//parse string
@@ -42,13 +43,6 @@ function _parseDurationString(d,durStr){
 		while (matchMade = _durationRegexp[i].re.exec(durStr)) {
 			d[_durationRegexp[i].key]+=parseFloat((matchMade[1]||"0").replace(",","."));
 		}
-		
-		/*
-		//single match
-		matchMade=durStr.match(_durationRegexp[i].re)
-		if(matchMade&&matchMade[1]){
-			d[_durationRegexp[i].key]+=parseFloat(("0"+matchMade[1]).replace(",","."));
-		}	*/
 	}
 	return d;
 }

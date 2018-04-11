@@ -40,7 +40,6 @@ function _parseDurationString(d,durStr){
 		
 		//for multiple matches on same regegexp we could use exec
 		while (matchMade = _durationRegexp[i].re.exec(durStr)) {
-			//console.log(matchMade)
 			d[_durationRegexp[i].key]+=parseFloat((matchMade[1]||"0").replace(",","."));
 		}
 		
@@ -263,16 +262,12 @@ XaDuration.prototype.format=function(tolerance){
 			currentVal+=dur[key]*this.getConversionFactor(key,"millisecond").factor
 			result.push(dur[key]+" "+key+(dur[key]>1?"s":""));
 			relError=1-currentVal/absV;
-			console.log(key)
-			console.log(result)
-			console.log(relError)
+
 		}
 		
 	}
 	//check if we could lower the relError by adding 1 to last found key (ex. rounding 3.5 years to 4)
 	currentVal+=1*this.getConversionFactor(key,"millisecond").factor;
-	console.log(key)
-	console.log(relError+">="+(-1+currentVal/absV)+":: "+(relError>=(-1+currentVal/absV)).toString())
 	if(relError>=(-1+currentVal/absV)){ //new relative error is negative because we are rounding up
 		result.push(result.pop().split(" ").map(function(v,i){return (i==0?+v+1:v)}).join(" "));
 	}	
@@ -305,7 +300,6 @@ XaDuration.prototype.removeIntervalOfType=function(type,value){
 }
 XaDuration.prototype.normalizeMonth=function(numberOfDays){
 	var dec=getDecimal(this.month);
-//console.log(this.month+"-"+dec)	
 	this.month=this.month-dec;
 	this.day+=numberOfDays*dec;
 	return this.normalizeDown();

@@ -34,7 +34,7 @@
     "tape": "^4.9.0"
   },
   "dependencies": {
-    "@xassist/xassist-object": "^1.0.4"
+    "@xassist/xassist-object": "^1.0.5"
   },
   "repository": {
     "type": "git",
